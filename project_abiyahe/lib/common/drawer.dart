@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:project_abiyahe/models/signup_values.dart';
+import 'package:project_abiyahe/providers/firebase_provider.dart';
 import 'package:project_abiyahe/screens/profile_screen.dart';
 import 'package:project_abiyahe/screens/user_profile_page.dart';
+import 'package:provider/provider.dart';
 import '../screens/similar_people_page.dart';
 import '../screens/travel_plans_page.dart';
 
@@ -44,9 +46,15 @@ class _DrawerWidgetState extends State<DrawerWidget> {
             title: Text("Profile Page"),
             onTap: () {
               Navigator.pop(context);
-              Navigator.pushReplacement(context, MaterialPageRoute(builder: (BuildContext context) => UserDetailsPage(user: User())));
+              Navigator.pushReplacement(context, MaterialPageRoute(builder: (BuildContext context) => UserDetailsPage()));
             },
-          )
+          ),
+
+          SizedBox(height: 300),
+          ListTile(
+            title: Text('Sign Out'),
+            onTap: () => context.read<TravelProvider>().signOut(),
+          ),
         ],
       ),
     );

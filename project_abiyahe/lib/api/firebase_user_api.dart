@@ -1,7 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class FirebaseUserAPI {
   static final FirebaseFirestore db = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   Future<String?> getCurrentUserId() async {
     try {
@@ -74,5 +76,8 @@ class FirebaseUserAPI {
     }
   }
 
+  Future<void> signOut() async {
+    await _auth.signOut();
+  }
 
 }

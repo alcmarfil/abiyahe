@@ -124,11 +124,13 @@ class _SignUpState extends State<SignUp> {
       ),
       keyboardType: TextInputType.emailAddress,
       onSaved: (val) => formValues.email = val?.trim(),
-      validator:
-          (val) =>
-              val != null && val.contains('@')
-                  ? null
-                  : "Email should contain @",
+      validator: (val) {
+         final emailRegex = RegExp(r"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$"); //to check if it is a valid email
+        if (val == null || val.isEmpty || !emailRegex.hasMatch(val)) {
+          return "Please enter a valid email format";
+        }
+        return null;
+      },
     );
   }
 
