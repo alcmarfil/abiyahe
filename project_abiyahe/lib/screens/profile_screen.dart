@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:project_abiyahe/api/firebase_user_api.dart';
+import 'package:project_abiyahe/common/drawer.dart';
 import 'package:project_abiyahe/models/signup_values.dart';
 import 'package:project_abiyahe/screens/user_profile_page.dart';
 
@@ -67,6 +68,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return const Scaffold(
+        drawer: DrawerWidget(),
         body: Center(
           child: CircularProgressIndicator(),
         ),
@@ -75,6 +77,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     if (_error != null) {
       return Scaffold(
+        drawer: DrawerWidget(),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:project_abiyahe/screens/profile_screen.dart';
 import '../screens/similar_people_page.dart';
 import '../screens/travel_plans_page.dart';
 
@@ -35,6 +36,13 @@ class _DrawerWidgetState extends State<DrawerWidget> {
             onTap: () {
               Navigator.pop(context);
               Navigator.pushReplacement(context, MaterialPageRoute(builder: (BuildContext context) => FindSimilarPeoplePage()));
+            },
+          ),
+          ListTile(
+            title: Text("Profile Page"),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushReplacement(context, MaterialPageRoute(builder: (BuildContext context) => ProfileScreen()));
             },
           )
         ],

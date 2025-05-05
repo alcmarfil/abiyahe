@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:project_abiyahe/models/signup_values.dart';
 import 'package:project_abiyahe/screens/edit_profile_page.dart';
-import 'package:project_abiyahe/provider/user_provider.dart';
+import 'package:project_abiyahe/providers/user_provider.dart';
 import 'package:provider/provider.dart';
 
 class UserDetailsPage extends StatefulWidget {
