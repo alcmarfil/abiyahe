@@ -413,12 +413,34 @@ class UserDetailsPageState extends State<UserDetailsPage> {
                   child: const Icon(Icons.camera_alt, color: Colors.blue, size: 18),
                 ),
                 onPressed: () async {
-                  final image = await ImagePicker().pickImage(
-                    source: ImageSource.camera,
+                  final snackBar = SnackBar(
+                    content: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        TextButton.icon(
+                          icon: Icon(Icons.camera_alt, color: Colors.blue),
+                          label: Text('Camera', style: TextStyle(color: Colors.blue)),
+                          onPressed: () async {
+                            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                            await _pickImage(ImageSource.camera);
+                          },
+                        ),
+                        TextButton.icon(
+                          icon: Icon(Icons.photo, color: Colors.blue),
+                          label: Text('Gallery', style: TextStyle(color: Colors.blue)),
+                          onPressed: () async {
+                            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                            await _pickImage(ImageSource.gallery);
+                          },
+                        ),
+                      ],
+                    ),
+                    duration: Duration(seconds: 5),
+                    backgroundColor: Colors.white,
+                    behavior: SnackBarBehavior.floating,
+                    dismissDirection: DismissDirection.horizontal,
                   );
-                  setState(() {
-                    imageFile = image == null ? null : File(image.path);
-                  });
+                  ScaffoldMessenger.of(context).showSnackBar(snackBar);
                 },
               ),
             ],
@@ -437,6 +459,15 @@ class UserDetailsPageState extends State<UserDetailsPage> {
         ],
       ),
     );
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    final image = await ImagePicker().pickImage(source: source);
+    if (image != null) {
+      setState(() {
+        imageFile = File(image.path);
+      });
+    }
   }
 
   Widget publicProfileAndFindButton({
@@ -520,34 +551,18 @@ class UserDetailsPageState extends State<UserDetailsPage> {
   Widget build(BuildContext context) {
     if (isLoading) {
       return Scaffold(
-        appBar: AppBar(
-          title: Text("Profile"),
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back),
-            onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil(
-              '/travel_plans',
-              (route) => false,
-            ),
-          ),
-        ),
+        backgroundColor: Colors.white,
         body: Center(
-          child: CircularProgressIndicator(),
+          child: CircularProgressIndicator(
+            color: Color(0xff25b1ff),
+          ),
         ),
       );
     }
 
     if (errorMessage != null) {
       return Scaffold(
-        appBar: AppBar(
-          title: Text("Profile"),
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back),
-            onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil(
-              '/travel_plans',
-              (route) => false,
-            ),
-          ),
-        ),
+        backgroundColor: Colors.white,
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -569,7 +584,7 @@ class UserDetailsPageState extends State<UserDetailsPage> {
     }
 
     return Scaffold(
-      drawer: DrawerWidget(),
+      // drawer: DrawerWidget(),
       backgroundColor: Colors.white,
       body: SingleChildScrollView(
         child: ConstrainedBox(

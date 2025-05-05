@@ -31,12 +31,42 @@ class _SignUpState extends State<SignUp> {
     "Group",
     "Couple",
   ];
+
+
   List<String> selectedInterests = [];
   List<String> selectedTravelPreferences = [];
+
 
   final passwordRegex = RegExp(
     r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{6,}$',
   );
+
+  Widget buildToggleButton(String text, bool isSelected, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 100, // Fixed width
+        height: 35,  // Fixed height
+        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        margin: EdgeInsets.only(right: 8, bottom: 5),
+        decoration: BoxDecoration(
+          color: isSelected ? Color(0xff9cd8ff) : Color.fromARGB(255, 75, 116, 144).withOpacity(0.3),
+          borderRadius: BorderRadius.circular(25),
+        ),
+        child: Center(
+          child: Text(
+            text,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: isSelected ? Colors.white : Colors.white.withOpacity(0.7),
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -59,6 +89,48 @@ class _SignUpState extends State<SignUp> {
               email(),
               password(),
               const SizedBox(height: 20),
+              Text("Interests"),
+                    SizedBox(height: 10),
+                    Wrap(
+                      alignment: WrapAlignment.spaceBetween,
+                      runSpacing: 10,
+                      children: interests.map((interest) => SizedBox(
+                        width: (MediaQuery.of(context).size.width - 80) / 3,
+                        child: buildToggleButton(
+                          interest,
+                          selectedInterests.contains(interest),
+                          () => setState(() {
+                            if (selectedInterests.contains(interest)) {
+                              selectedInterests.remove(interest);
+                            } else {
+                              selectedInterests.add(interest);
+                            }
+                          }),
+                        ),
+                      )).toList(),
+                    ),
+                    SizedBox(height: 20),
+                    Text("Travel Preferences"),
+                    SizedBox(height: 10),
+                    Wrap(
+                      alignment: WrapAlignment.spaceBetween,
+                      runSpacing: 10,
+                      children: travelPreferences.map((style) => SizedBox(
+                        width: (MediaQuery.of(context).size.width - 80) / 3,
+                        child: buildToggleButton(
+                          style,
+                          selectedTravelPreferences.contains(style),
+                          () => setState(() {
+                            if (selectedTravelPreferences.contains(style)) {
+                              selectedTravelPreferences.remove(style);
+                            } else {
+                              selectedTravelPreferences.add(style);
+                            }
+                          }),
+                        ),
+                      )).toList(),
+                    ),
+                    SizedBox(height: 30),
               ElevatedButton(
                 onPressed: submitAll,
                 child: Text("Create Account"),
@@ -154,6 +226,9 @@ class _SignUpState extends State<SignUp> {
     if (formKey.currentState?.validate() ?? false) {
       formKey.currentState?.save();
       setState(() => errorText = null);
+      print("Selected travel preference: $selectedTravelPreferences");
+      print("Selected interests: $selectedInterests");
+
 
       try {
         String? error = await Provider.of<TravelProvider>(
@@ -165,8 +240,8 @@ class _SignUpState extends State<SignUp> {
           userName: formValues.userName!,
           email: formValues.email!,
           password: formValues.password!,
-          interests: formValues.interests,
-          travelPreferences: formValues.travelPreferences,
+          interests: selectedInterests,
+          travelPreferences: selectedTravelPreferences,
         );
 
         if (error != null) {

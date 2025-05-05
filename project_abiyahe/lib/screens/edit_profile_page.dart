@@ -55,23 +55,23 @@ class EditProfilePageState extends State<EditProfilePage> {
   }
 
   // Lists of available options
-  final List<String> interests = [
-    'Music',
-    'Art',
-    'Food',
-    'Travel',
-    'Books',
-    'Science',
+  List<String> interests = [
+    "Adventure",
+    "Beach",
+    "Culture",
+    "Food",
+    "Nature",
+    "Relaxation",
+  ];
+  List<String> travelPreferences = [
+    "Budget",
+    "Luxury",
+    "Solo",
+    "Family",
+    "Group",
+    "Couple",
   ];
 
-  final List<String> travelPreferences = [
-    'Adventurer',
-    'Solo Traveler',
-    'Relaxation',
-    'Explorer',
-    'Leisure',
-    'Food Travel',
-  ];
 
   final labelStyle = TextStyle(
     fontWeight: FontWeight.bold,
@@ -132,23 +132,7 @@ class EditProfilePageState extends State<EditProfilePage> {
         onPressed: () async {
           if (formKey.currentState?.validate() ?? false) {
             formKey.currentState?.save();
-            
-            // validate interests and travel styles
-            if (selectedInterests.isEmpty || selectedTravelPreferences.isEmpty) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    selectedInterests.isEmpty && selectedTravelPreferences.isEmpty
-                        ? 'Please select at least one interest and travel preference'
-                        : selectedInterests.isEmpty
-                            ? 'Please select at least one interest'
-                            : 'Please select at least one travel preference'
-                  ),
-                  backgroundColor: Color(0xff25b1ff),
-                ),
-              );
-              return;
-            }
+                      
 
             try {
               final userDetails = context.read<UserProvider>().userDetails;
@@ -189,6 +173,15 @@ class EditProfilePageState extends State<EditProfilePage> {
         ),
       )
     );
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    final image = await ImagePicker().pickImage(source: source);
+    if (image != null) {
+      setState(() {
+        imageFile = File(image.path);
+      });
+    }
   }
 
   @override
@@ -248,12 +241,34 @@ class EditProfilePageState extends State<EditProfilePage> {
                     right: 0,
                     child: GestureDetector(
                       onTap: () async {
-                        final image = await ImagePicker().pickImage(
-                          source: ImageSource.camera,
+                        final snackBar = SnackBar(
+                          content: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              TextButton.icon(
+                                icon: Icon(Icons.camera_alt, color: Colors.blue),
+                                label: Text('Camera', style: TextStyle(color: Colors.blue)),
+                                onPressed: () async {
+                                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                                  await _pickImage(ImageSource.camera);
+                                },
+                              ),
+                              TextButton.icon(
+                                icon: Icon(Icons.photo, color: Colors.blue),
+                                label: Text('Gallery', style: TextStyle(color: Colors.blue)),
+                                onPressed: () async {
+                                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                                  await _pickImage(ImageSource.gallery);
+                                },
+                              ),
+                            ],
+                          ),
+                          duration: Duration(seconds: 5),
+                          backgroundColor: Colors.white,
+                          behavior: SnackBarBehavior.floating,
+                          dismissDirection: DismissDirection.horizontal,
                         );
-                        setState(() {
-                          imageFile = image == null ? null : File(image.path);
-                        });
+                        ScaffoldMessenger.of(context).showSnackBar(snackBar);
                       },
                       child: Container(
                         padding: EdgeInsets.all(6),

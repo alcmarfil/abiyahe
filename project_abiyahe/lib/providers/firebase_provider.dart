@@ -42,6 +42,9 @@ class TravelProvider extends ChangeNotifier {
       );
       _user = userCredential.user;
 
+      print(interests);
+      print(travelPreferences);
+
       if (_user != null) {
         await _firestore.collection("Users").doc(_user!.uid).set({
           "email": email,
@@ -49,8 +52,8 @@ class TravelProvider extends ChangeNotifier {
           "lastName": lastName,
           "userName": userName,
           "userId": _user!.uid,
-          "interests": interests ?? [],
-          "travelPreferences": travelPreferences ?? [],
+          "interests": interests,
+          "travelPreferences": travelPreferences,
         });
       }
       notifyListeners();
