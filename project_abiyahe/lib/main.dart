@@ -49,7 +49,7 @@ class MyApp extends StatelessWidget {
         '/login': (context) => Login(),
         '/travel_plans': (context) => TravelPlansPage(),
         '/similar_people': (context) => FindSimilarPeoplePage(),
-        '/profile': (context) => UserDetailsPage(user: User(),),
+        '/profile': (context) => UserDetailsPage(),
       },
     );
   }

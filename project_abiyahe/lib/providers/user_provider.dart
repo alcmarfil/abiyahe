@@ -1,12 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:project_abiyahe/api/firebase_user_api.dart';
-import 'package:project_abiyahe/models/signup_values.dart';
+import 'package:project_abiyahe/models/user_model.dart';
+import 'package:firebase_auth/firebase_auth.dart' as auth;
 
 class UserProvider extends ChangeNotifier {
   User? _user;
   Map<String, dynamic>? _userDetails;
   String? _currentUserId;
+  final auth.FirebaseAuth _auth = auth.FirebaseAuth.instance;
 
   late Stream<QuerySnapshot> _userStream;
   late FirebaseUserAPI firebaseService;
@@ -17,7 +19,10 @@ class UserProvider extends ChangeNotifier {
   }
 
   Future<void> _initializeUserId() async {
-    _currentUserId = await firebaseService.getCurrentUserId();
+    _currentUserId = _auth.currentUser?.uid;
+    if (_currentUserId != null) {
+      await getUserDetails(_currentUserId!);
+    }
     notifyListeners();
   }
 
@@ -28,10 +33,19 @@ class UserProvider extends ChangeNotifier {
   
   Future<String?> getCurrentUserId() async {
     if (_currentUserId == null) {
-      _currentUserId = await firebaseService.getCurrentUserId();
+      _currentUserId = _auth.currentUser?.uid;
+      if (_currentUserId != null) {
+        await getUserDetails(_currentUserId!);
+      }
       notifyListeners();
     }
     return _currentUserId;
+  }
+
+  Future<void> updateUserDetails(Map<String, dynamic> userData) async {
+    _userDetails = userData;
+    _currentUserId = userData['userId'];
+    notifyListeners();
   }
 
   Future<void> editUser({

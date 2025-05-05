@@ -2,15 +2,12 @@ import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:project_abiyahe/common/drawer.dart';
-import 'package:project_abiyahe/models/signup_values.dart';
 import 'package:project_abiyahe/screens/edit_profile_page.dart';
 import 'package:project_abiyahe/providers/user_provider.dart';
 import 'package:provider/provider.dart';
-
+import 'package:project_abiyahe/models/user_model.dart';
 class UserDetailsPage extends StatefulWidget {
-  final User? user;
-  const UserDetailsPage({super.key, required this.user});
-  // const UserDetailsPage({super.key});
+  const UserDetailsPage({super.key});
 
   @override
   UserDetailsPageState createState() => UserDetailsPageState();
@@ -38,51 +35,68 @@ class UserDetailsPageState extends State<UserDetailsPage> {
   String? pressedInterest;
   bool isPublic = true;
   File? imageFile;
+  bool isLoading = true;
+  String? errorMessage;
+  bool _isInitialized = false;
+  String? _currentUserId;
 
   @override
   void initState() {
     super.initState();
-    fetchUserDetails();
-    // loadMockData();
   }
 
-
-
-  // void loadMockData() {
-  //   setState(() {
-  //     firstName = "Thea";
-  //     lastName = "Jones";
-  //     email = "theajones@gmail.com";
-  //     phoneNumber = "+63 2903 3882";
-  //     username = "alcmarfil";
-  //     profilePictureUrl = "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png";
-  //     // interests = ["Coffee", "Science", "Music", "Travel", "Art"];
-  //     interests = ["Coffee", "Science", "Music", "Travel", "Art", "Coffee"];
-
-  //     travelPreferences = [
-  //       "Adventure",
-  //       "Relaxation",
-  //       "Culture",
-
-
-  //     ];
-  //   });
-  // }
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_isInitialized) {
+      _isInitialized = true;
+      fetchUserDetails();
+    }
+  }
 
   Future<void> fetchUserDetails() async {
-    if (widget.user == null || widget.user!.userId == null) return;
-    await context.read<UserProvider>().getUserDetails(widget.user!.userId!);
-    final userDetails = context.read<UserProvider>().userDetails;
-    if (userDetails != null) {
+    setState(() {
+      isLoading = true;
+      errorMessage = null;
+    });
+
+    try {
+      final userProvider = context.read<UserProvider>();
+      final currentUserId = await userProvider.getCurrentUserId();
+      
+      if (currentUserId == null) {
+        setState(() {
+          isLoading = false;
+          errorMessage = "No user logged in";
+        });
+        return;
+      }
+
+      await userProvider.getUserDetails(currentUserId);
+      final userDetails = userProvider.userDetails;
+      
+      if (userDetails != null) {
+        setState(() {
+          firstName = userDetails['firstName'];
+          lastName = userDetails['lastName'];
+          email = userDetails['email'];
+          phoneNumber = userDetails['phoneNumber'];
+          userName = userDetails['userName'];
+          profilePictureUrl = userDetails['profilePictureUrl'];
+          interests = List<String>.from(userDetails['interests'] ?? []);
+          travelPreferences = List<String>.from(userDetails['travelPreferences'] ?? []);
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          isLoading = false;
+          errorMessage = "Failed to load user details";
+        });
+      }
+    } catch (e) {
       setState(() {
-        firstName = userDetails['firstName'];
-        lastName = userDetails['lastName'];
-        email = userDetails['email'];
-        phoneNumber = userDetails['phoneNumber'];
-        userName = userDetails['userName'] ?? widget.user?.userName;
-        profilePictureUrl = userDetails['profilePictureUrl'];
-        interests = List<String>.from(userDetails['interests'] ?? []);
-        travelPreferences = List<String>.from(userDetails['travelPreferences'] ?? []);
+        isLoading = false;
+        errorMessage = "Error loading user details: $e";
       });
     }
   }
@@ -504,6 +518,56 @@ class UserDetailsPageState extends State<UserDetailsPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text("Profile"),
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back),
+            onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil(
+              '/travel_plans',
+              (route) => false,
+            ),
+          ),
+        ),
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    if (errorMessage != null) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text("Profile"),
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back),
+            onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil(
+              '/travel_plans',
+              (route) => false,
+            ),
+          ),
+        ),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                errorMessage!,
+                style: TextStyle(color: Colors.red),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: fetchUserDetails,
+                child: Text("Retry"),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       drawer: DrawerWidget(),
       backgroundColor: Colors.white,
@@ -562,9 +626,7 @@ class UserDetailsPageState extends State<UserDetailsPage> {
                     color: const Color(0xFF25B1FF),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(
-                          0x40797979,
-                        ).withOpacity(0.25), // #797979 25%
+                        color: const Color(0x40797979).withOpacity(0.25),
                         offset: const Offset(-15, 15),
                         blurRadius: 50,
                       ),
@@ -584,9 +646,7 @@ class UserDetailsPageState extends State<UserDetailsPage> {
                     color: const Color(0xFF25B1FF),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(
-                          0x40797979,
-                        ).withOpacity(0.25), // #797979 25%
+                        color: const Color(0x40797979).withOpacity(0.25),
                         offset: const Offset(-15, 15),
                         blurRadius: 50,
                       ),
@@ -597,21 +657,17 @@ class UserDetailsPageState extends State<UserDetailsPage> {
               SingleChildScrollView(
                 child: Column(
                   children: [
-                    const SizedBox(height: 40), // padding for safe area
+                    const SizedBox(height: 40),
                     profilePicture(context),
-
                     const SizedBox(height: 24),
-                    // Info Card
                     contactInfoCard(context),
-
                     const SizedBox(height: 16),
-                    // Interests Section
-                    buildInterestsSection(context),
+                    if (interests != null && interests!.isNotEmpty)
+                      buildInterestsSection(context),
                     const SizedBox(height: 16),
-                    // Travel Styles Section
-                    buildTravelStylesSection(context),
+                    if (travelPreferences != null && travelPreferences!.isNotEmpty)
+                      buildTravelStylesSection(context),
                     const SizedBox(height: 16),
-                    // Public Profile and Find Button
                     publicProfileAndFindButton(
                       isPublic: isPublic,
                       onToggle: (val) => setState(() => isPublic = val),
@@ -637,7 +693,6 @@ class UserDetailsPageState extends State<UserDetailsPage> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        // Back arrow
                         IconButton(
                           icon: const Icon(
                             Icons.arrow_back,
@@ -645,10 +700,12 @@ class UserDetailsPageState extends State<UserDetailsPage> {
                             size: 32,
                           ),
                           onPressed: () {
-                            Navigator.of(context).pop();
+                            Navigator.of(context).pushNamedAndRemoveUntil(
+                              '/travel_plans',
+                              (route) => false,
+                            );
                           },
                         ),
-                        // Username
                         Expanded(
                           child: Center(
                             child: Text(
@@ -658,12 +715,10 @@ class UserDetailsPageState extends State<UserDetailsPage> {
                                 fontWeight: FontWeight.bold,
                                 fontSize: 20,
                               ),
-                              overflow:
-                                  TextOverflow.ellipsis, //ellipsis for overflow
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ),
-                        // Edit icon
                         IconButton(
                           icon: const Icon(
                             Icons.edit,
