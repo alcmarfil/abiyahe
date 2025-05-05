@@ -5,6 +5,10 @@ class User {
   String email;
   List<String>? interests;
   List<String>? travelPreferences;
+  String? userId;
+  String? profilePictureUrl;
+  String? phoneNumber;
+
 
   User({
     required this.firstName,
@@ -13,5 +17,8 @@ class User {
     required this.email,
     this.interests,
     this.travelPreferences,
+    this.userId,
+    this.profilePictureUrl,
+    this.phoneNumber,
   });
 }

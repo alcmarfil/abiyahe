@@ -1,4 +1,4 @@
-class User {
+class SignUpValues {
    String? firstName;
    String? lastName;
    String? userName;
@@ -6,11 +6,10 @@ class User {
    String? password;
    List<String>? interests;
    List<String>? travelPreferences;
-   String? profilePictureUrl;
    String? phoneNumber;
    String? userId;
 
-   User({
+   SignUpValues({
     this.firstName,
     this.lastName,
     this.userName,
@@ -18,7 +17,6 @@ class User {
     this.password,
     this.interests,
     this.travelPreferences,
-    this.profilePictureUrl,
     this.phoneNumber,
     this.userId,
    });
