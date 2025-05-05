@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import 'package:project_abiyahe/common/drawer.dart';
 import 'package:project_abiyahe/models/signup_values.dart';
 import 'package:project_abiyahe/screens/edit_profile_page.dart';
 import 'package:project_abiyahe/providers/user_provider.dart';
@@ -504,6 +505,7 @@ class UserDetailsPageState extends State<UserDetailsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: DrawerWidget(),
       backgroundColor: Colors.white,
       body: SingleChildScrollView(
         child: ConstrainedBox(

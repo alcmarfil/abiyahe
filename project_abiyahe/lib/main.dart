@@ -1,7 +1,9 @@
 import 'package:project_abiyahe/firebase_options.dart';
+import 'package:project_abiyahe/models/signup_values.dart';
 import 'package:project_abiyahe/screens/similar_people_page.dart';
 import 'package:project_abiyahe/screens/travel_plans_page.dart';
 import 'package:project_abiyahe/providers/firebase_provider.dart';
+import 'package:project_abiyahe/screens/user_profile_page.dart';
 import '/screens/login.dart';
 import '/screens/sign_up.dart';
 import 'package:flutter/material.dart';
@@ -47,7 +49,7 @@ class MyApp extends StatelessWidget {
         '/login': (context) => Login(),
         '/travel_plans': (context) => TravelPlansPage(),
         '/similar_people': (context) => FindSimilarPeoplePage(),
-        '/profile': (context) => ProfileScreen(),
+        '/profile': (context) => UserDetailsPage(user: User(),),
       },
     );
   }
