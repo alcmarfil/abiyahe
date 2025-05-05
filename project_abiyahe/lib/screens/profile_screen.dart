@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:project_abiyahe/api/firebase_user_api.dart';
 import 'package:project_abiyahe/common/drawer.dart';
-import 'package:project_abiyahe/models/signup_values.dart';
+import 'package:project_abiyahe/models/user_model.dart';
 import 'package:project_abiyahe/screens/user_profile_page.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -67,7 +67,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
+      return  Scaffold(
         drawer: DrawerWidget(),
         body: Center(
           child: CircularProgressIndicator(),
@@ -102,6 +102,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
     }
 
-    return UserDetailsPage(user: _user);
+    return UserDetailsPage();
   }
 } 

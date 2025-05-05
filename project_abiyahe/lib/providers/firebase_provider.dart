@@ -42,7 +42,6 @@ class TravelProvider extends ChangeNotifier {
       );
       _user = userCredential.user;
 
-      //print('User created with UID: ${_user?.uid}');
       if (_user != null) {
         await _firestore.collection("Users").doc(_user!.uid).set({
           "email": email,
@@ -50,15 +49,29 @@ class TravelProvider extends ChangeNotifier {
           "lastName": lastName,
           "userName": userName,
           "userId": _user!.uid,
-          // "interests": interests ?? [],
-          // "travelPreferences": travelPreferences ?? [],
+          "interests": interests ?? [],
+          "travelPreferences": travelPreferences ?? [],
         });
-        // print('User data saved to Firestore');
       }
       notifyListeners();
       return null;
     } on FirebaseAuthException catch (e) {
       return e.message;
+    }
+  }
+
+  Future<Map<String, dynamic>?> getUserData() async {
+    if (_user == null) return null;
+    
+    try {
+      final doc = await _firestore.collection("Users").doc(_user!.uid).get();
+      if (doc.exists) {
+        return doc.data();
+      }
+      return null;
+    } catch (e) {
+      print("Error getting user data: $e");
+      return null;
     }
   }
 
@@ -101,6 +114,7 @@ class TravelProvider extends ChangeNotifier {
       }
     }
   }
+
 
   Future<void> signOut() async {
     await _auth.signOut();
