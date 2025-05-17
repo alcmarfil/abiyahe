@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:project_abiyahe/models/signup_values.dart';
 import 'package:project_abiyahe/providers/firebase_provider.dart';
-import 'package:project_abiyahe/screens/profile_screen.dart';
+import 'package:project_abiyahe/providers/travel_plan_provider.dart';
 import 'package:project_abiyahe/screens/user_profile_page.dart';
 import 'package:provider/provider.dart';
 import '../screens/similar_people_page.dart';
@@ -53,10 +52,23 @@ class _DrawerWidgetState extends State<DrawerWidget> {
           SizedBox(height: 300),
           ListTile(
             title: Text('Sign Out'),
-            onTap: () => context.read<TravelProvider>().signOut(),
+            onTap: () {
+                signOut(context);
+             },
           ),
         ],
       ),
     );
+  }
+
+
+  Future<void> signOut(BuildContext context) async {
+    try {
+      await context.read<TravelProvider>().signOut();
+      context.read<TravelPlanProvider>().clear();
+      Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+    } catch (e) {
+      print("Error signing out: $e");
+    }
   }
 }

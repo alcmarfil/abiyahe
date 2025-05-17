@@ -1,12 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:project_abiyahe/api/firebase_user_api.dart';
-import 'package:project_abiyahe/models/user_model.dart';
+// import 'package:project_abiyahe/models/user_model.dart';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
 
 class UserProvider extends ChangeNotifier {
-  User? _user;
+  // User? _user;
   Map<String, dynamic>? _userDetails;
+  List<String>? _friends;
   String? _currentUserId;
   final auth.FirebaseAuth _auth = auth.FirebaseAuth.instance;
 
@@ -15,16 +16,24 @@ class UserProvider extends ChangeNotifier {
 
   UserProvider() {
     firebaseService = FirebaseUserAPI();
-    _initializeUserId();
+    firebaseService.authStateChanges().listen((user) async {
+      if (user != null) {
+        _currentUserId = user.uid;
+        await getUserDetails(_currentUserId!);
+      } else {
+        await clear();
+      }
+      notifyListeners();
+    });
   }
 
-  Future<void> _initializeUserId() async {
-    _currentUserId = _auth.currentUser?.uid;
-    if (_currentUserId != null) {
-      await getUserDetails(_currentUserId!);
-    }
-    notifyListeners();
-  }
+  // Future<void> _initializeUserId() async {
+  //   _currentUserId = _auth.currentUser?.uid;
+  //   if (_currentUserId != null) {
+  //     await getUserDetails(_currentUserId!);
+  //   }
+  //   notifyListeners();
+  // }
 
   // getters
   Stream<QuerySnapshot> get user => _userStream;
@@ -108,5 +117,35 @@ class UserProvider extends ChangeNotifier {
     } catch (e) {
       print("Error fetching user details: $e");
     }
+  }
+
+  Future<void> clear() async {
+    _userDetails = null;
+    _currentUserId = null;
+    _userStream = Stream.empty();
+    notifyListeners();
+  }
+
+  Future<void> signOut() async {
+    await firebaseService.signOut();
+    clear();
+  }
+
+  Future<void> getFriends() async {
+    final uid = await getCurrentUserId();
+    if (uid == null) {
+      throw Exception('User not logged in');
+    }
+    await firebaseService.canShareWithFriends(uid, _friends!);
+    notifyListeners();
+  }
+
+  Future<void> updateUserIsPublic(bool isPublic) async {
+    final uid = await getCurrentUserId();
+    if (uid == null) {
+      throw Exception('User not logged in');
+    }
+    await firebaseService.updateUserIsPublic(uid, isPublic);
+    notifyListeners();
   }
 } 

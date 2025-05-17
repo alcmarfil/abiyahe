@@ -1,5 +1,5 @@
 import 'package:project_abiyahe/firebase_options.dart';
-import 'package:project_abiyahe/models/signup_values.dart';
+import 'package:project_abiyahe/screens/add_travel_plan_page.dart';
 import 'package:project_abiyahe/screens/similar_people_page.dart';
 import 'package:project_abiyahe/screens/travel_plans_page.dart';
 import 'package:project_abiyahe/providers/firebase_provider.dart';
@@ -10,20 +10,25 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:project_abiyahe/providers/user_provider.dart';
 import 'package:provider/provider.dart';
-import 'package:project_abiyahe/screens/profile_screen.dart';
-import 'firebase_options.dart';
+import 'package:project_abiyahe/providers/travel_plan_provider.dart';
+import 'package:project_abiyahe/services/notification_service.dart';
+
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  
+  // Initialize the notification service
+  await LocalNotificationService().initialize();
 
   runApp(
     MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => TravelProvider()),
         ChangeNotifierProvider(create: (_) => UserProvider()),
-        ChangeNotifierProvider(create: (context) => TravelProvider()),
+        ChangeNotifierProvider(create: (_) => TravelPlanProvider()),
       ],
       child: const MyApp(),
     ),
@@ -36,10 +41,12 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
+        dividerColor: Colors.transparent,
+        colorScheme: ColorScheme.fromSeed(seedColor:  Color(0xff25b1ff)),
         appBarTheme: AppBarTheme(
-          color: Colors.indigo,
+          color: Color(0xff25b1ff),
           titleTextStyle: TextStyle(color: Colors.white, fontSize: 22),
         ),
       ),
@@ -47,29 +54,11 @@ class MyApp extends StatelessWidget {
       routes: {
         '/signup': (context) => SignUp(),
         '/login': (context) => Login(),
-        '/travel_plans': (context) => TravelPlansPage(),
+        '/travel_plans': (context) => const TravelPlansPage(),
         '/similar_people': (context) => FindSimilarPeoplePage(),
         '/profile': (context) => UserDetailsPage(),
+        '/add-travel-plan': (context) => AddTravelPlanPage(),
       },
     );
   }
 }
-
-// class FormPage extends StatefulWidget {
-//   const FormPage({super.key});
-
-//   @override
-//   State<FormPage> createState() => _FormPageState();
-// }
-
-// class _FormPageState extends State<FormPage> {
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(title: Text("Form and Form Input Widgets")),
-//       body: ListView(
-//         children: [TextFieldSample(), CheckboxSample(), DropdownSample()],
-//       ),
-//     );
-//   }
-// }

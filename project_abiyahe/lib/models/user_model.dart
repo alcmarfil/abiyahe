@@ -8,6 +8,10 @@ class User {
   String? userId;
   String? profilePictureUrl;
   String? phoneNumber;
+  List<String>? friends;
+  bool? isPublic;
+  List<String>? pendingRequests;
+  List<String>? receivedRequests;
 
 
   User({
@@ -20,5 +24,13 @@ class User {
     this.userId,
     this.profilePictureUrl,
     this.phoneNumber,
+    this.friends,
+    this.isPublic,
+    this.pendingRequests,
+    this.receivedRequests,
   });
+
 }
+
+
+  

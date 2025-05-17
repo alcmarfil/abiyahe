@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
-import 'package:project_abiyahe/common/drawer.dart';
+import 'package:project_abiyahe/common/navbar.dart';
 import 'package:project_abiyahe/screens/edit_profile_page.dart';
 import 'package:project_abiyahe/providers/user_provider.dart';
+import 'package:project_abiyahe/providers/firebase_provider.dart';
+import 'package:project_abiyahe/providers/travel_plan_provider.dart';
 import 'package:provider/provider.dart';
-import 'package:project_abiyahe/models/user_model.dart';
+
 class UserDetailsPage extends StatefulWidget {
   const UserDetailsPage({super.key});
 
@@ -33,12 +35,13 @@ class UserDetailsPageState extends State<UserDetailsPage> {
   List<String>? travelPreferences;
   String? hoveredInterest;
   String? pressedInterest;
-  bool isPublic = true;
+  bool? isPublic;
   File? imageFile;
   bool isLoading = true;
   String? errorMessage;
   bool _isInitialized = false;
-  String? _currentUserId;
+  List<String> friends = [];
+
 
   @override
   void initState() {
@@ -85,6 +88,8 @@ class UserDetailsPageState extends State<UserDetailsPage> {
           profilePictureUrl = userDetails['profilePictureUrl'];
           interests = List<String>.from(userDetails['interests'] ?? []);
           travelPreferences = List<String>.from(userDetails['travelPreferences'] ?? []);
+          isPublic = userDetails['isPublic'] ?? true;
+          friends = List<String>.from(userDetails['friends'] ?? []);
           isLoading = false;
         });
       } else {
@@ -447,13 +452,32 @@ class UserDetailsPageState extends State<UserDetailsPage> {
           ),
           const SizedBox(width: 24),
           Expanded(
-            child: Text(
-              "${firstName ?? ""} ${lastName ?? ""}",
-              style: const TextStyle(
-                fontSize: 20,
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "${firstName ?? ""} ${lastName ?? ""}",
+                  style: const TextStyle(
+                    fontSize: 20,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                InkWell(
+                  onTap: () {}, // to be implemented
+                  child: Text(
+                    "${friends.length} friend${friends.length == 1 ? "" : "s"}",
+                    style: const TextStyle(
+                      fontSize: 15,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w500,
+                      decoration: TextDecoration.underline,
+                      decorationColor: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -583,6 +607,7 @@ class UserDetailsPageState extends State<UserDetailsPage> {
       );
     }
 
+    var selectedIndex = 3;
     return Scaffold(
       // drawer: DrawerWidget(),
       backgroundColor: Colors.white,
@@ -684,13 +709,62 @@ class UserDetailsPageState extends State<UserDetailsPage> {
                       buildTravelStylesSection(context),
                     const SizedBox(height: 16),
                     publicProfileAndFindButton(
-                      isPublic: isPublic,
-                      onToggle: (val) => setState(() => isPublic = val),
+                      isPublic: isPublic ?? true,
+                      onToggle: (val) async {
+                        setState(() => isPublic = val);
+                        try {
+                          await context.read<UserProvider>().updateUserIsPublic(val);
+                        } catch (e) {
+                          print(e);
+                        }
+                      },
                       onFindSimilar: () {
                         // action here
                       },
                     ),
                     const SizedBox(height: 16),
+                    // Sign Out Button
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                      child: Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(32),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black12,
+                              blurRadius: 8,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: TextButton.icon(
+                          onPressed: () async {
+                            try {
+                              await context.read<TravelProvider>().signOut();
+                              context.read<TravelPlanProvider>().clear();
+                              Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+                            } catch (e) {
+                              print("Error signing out: $e");
+                            }
+                          },
+                          icon: Icon(Icons.logout, color: Colors.red),
+                          label: Text(
+                            'Sign Out',
+                            style: TextStyle(
+                              color: Colors.red,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          style: TextButton.styleFrom(
+                            padding: EdgeInsets.symmetric(vertical: 16),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 32),
                   ],
                 ),
               ),
@@ -760,6 +834,11 @@ class UserDetailsPageState extends State<UserDetailsPage> {
             ],
           ),
         ),
+      ),
+      bottomNavigationBar: CustomNavBar(
+        currentIndex: selectedIndex,
+        onTap: (index) => (index),
+
       ),
     );
   }
