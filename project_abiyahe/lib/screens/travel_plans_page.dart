@@ -462,4 +462,3 @@ class _TravelPlansPageState extends State<TravelPlansPage> {
     );  
   }  
 }  
-
