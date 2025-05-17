@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "450715966320",
+    "project_id": "abiyahe-cmsc23",
+    "storage_bucket": "abiyahe-cmsc23.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:450715966320:android:edcca860037d7e5d318db5",
+        "android_client_info": {
+          "package_name": "com.example.project_abiyahe"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDsFrW_FPVHFL5hwJuS5X5ItshAXj9ypFY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
