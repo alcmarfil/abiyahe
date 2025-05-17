@@ -49,6 +49,7 @@ class MyApp extends StatelessWidget {
           titleTextStyle: TextStyle(color: Colors.white, fontSize: 22),
         ),
       ),
+      initialRoute: '/signup',
       home: Consumer<TravelProvider>(
         builder: (context, authProvider, _) {
           return StreamBuilder(

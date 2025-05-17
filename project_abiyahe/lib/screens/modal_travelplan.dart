@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:project_abiyahe/screens/qr_code_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:project_abiyahe/models/travel_plans_model.dart';
 import 'package:project_abiyahe/providers/travel_plan_provider.dart';
@@ -14,7 +15,17 @@ class TravelPlanModal extends StatefulWidget {
   final DateTime? activityDate;
   final String? activity;
   final List<String>? usernames;
-  const TravelPlanModal({super.key, required this.type, this.item, this.date, this.activityDate, this.activity, this.usernames});
+  final bool showQRButton; // Added this parameter
+  const TravelPlanModal({
+    super.key, 
+    required this.type, 
+    this.item, 
+    this.date, 
+    this.activityDate, 
+    this.activity, 
+    this.usernames,
+    this.showQRButton = false, // Default to false
+  });
 
   @override
   State<TravelPlanModal> createState() => _TravelPlanModalState();
@@ -251,6 +262,23 @@ class _TravelPlanModalState extends State<TravelPlanModal> {
                 labelText: 'Enter friend\'s username',
               ),
             ),
+            if (widget.showQRButton) ...[
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                icon: const Icon(Icons.qr_code),
+                label: const Text('Generate QR Code'),
+                onPressed: () {
+                  Navigator.of(context).pop(); // Close modal
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => QrCodeScreen(
+                        travelId: widget.item!.travelId!,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
           ],
         );
       case 'Remove Access':
