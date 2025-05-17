@@ -10,6 +10,7 @@ import 'package:http/http.dart' as http;
 import 'package:project_abiyahe/providers/user_provider.dart';
 import 'package:project_abiyahe/services/notification_service.dart';
 import 'package:timezone/timezone.dart' as tz;
+import 'package:project_abiyahe/config/api_config.dart';
 
 class PlanHeader extends StatelessWidget {
   final String locationName;
@@ -18,7 +19,7 @@ class PlanHeader extends StatelessWidget {
   Future<String?> fetchImageUrl(String query) async {
     //fetch image url using unsplash api
     final url = Uri.parse(
-      'https://api.unsplash.com/search/photos?query=$query&client_id=e3JrbfAh4WtmjQZriPQfmVICktBylK_ku8dM8TbpvzQ',
+      'https://api.unsplash.com/search/photos?query=$query&client_id=${ApiConfig.unsplashApiKey}',
     );
     final response = await http.get(url);
     if (response.statusCode == 200) {
