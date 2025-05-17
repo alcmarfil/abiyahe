@@ -13,7 +13,6 @@ import 'package:provider/provider.dart';
 import 'package:project_abiyahe/providers/travel_plan_provider.dart';
 import 'package:project_abiyahe/services/notification_service.dart';
 
-
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
@@ -50,7 +49,24 @@ class MyApp extends StatelessWidget {
           titleTextStyle: TextStyle(color: Colors.white, fontSize: 22),
         ),
       ),
-      initialRoute: '/signup',
+      home: Consumer<TravelProvider>(
+        builder: (context, authProvider, _) {
+          return StreamBuilder(
+            stream: authProvider.authStateChanges(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              
+              if (snapshot.hasData) {
+                return const TravelPlansPage();
+              }
+              
+              return const Login();
+            },
+          );
+        },
+      ),
       routes: {
         '/signup': (context) => SignUp(),
         '/login': (context) => Login(),

@@ -15,6 +15,10 @@ class TravelProvider extends ChangeNotifier {
     });
   }
 
+  Stream<User?> authStateChanges() {
+    return _userApi.authStateChanges();
+  }
+
   Future<String?> signup({
     required String firstName,
     required String lastName,
