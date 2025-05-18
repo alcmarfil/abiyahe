@@ -12,8 +12,13 @@ class SignUp extends StatefulWidget {
 
 class _SignUpState extends State<SignUp> {
   final formKey = GlobalKey<FormState>();
-  SignUpForm formValues = SignUpForm();
   String? errorText;
+
+  late TextEditingController firstNameController;
+  late TextEditingController lastNameController;
+  late TextEditingController userNameController;
+  late TextEditingController emailController;
+  late TextEditingController passwordController;
 
   List<String> interests = [
     "Adventure",
@@ -23,6 +28,7 @@ class _SignUpState extends State<SignUp> {
     "Nature",
     "Relaxation",
   ];
+
   List<String> travelPreferences = [
     "Budget",
     "Luxury",
@@ -32,25 +38,45 @@ class _SignUpState extends State<SignUp> {
     "Couple",
   ];
 
-
   List<String> selectedInterests = [];
   List<String> selectedTravelPreferences = [];
-
 
   final passwordRegex = RegExp(
     r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{6,}$',
   );
 
+  @override
+  void initState() {
+    super.initState();
+    firstNameController = TextEditingController();
+    lastNameController = TextEditingController();
+    userNameController = TextEditingController();
+    emailController = TextEditingController();
+    passwordController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    firstNameController.dispose();
+    lastNameController.dispose();
+    userNameController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
+
   Widget buildToggleButton(String text, bool isSelected, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 100, // Fixed width
-        height: 35,  // Fixed height
+        width: 100,
+        height: 35,
         padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
         margin: EdgeInsets.only(right: 8, bottom: 5),
         decoration: BoxDecoration(
-          color: isSelected ? Color(0xff9cd8ff) : Color.fromARGB(255, 75, 116, 144).withOpacity(0.3),
+          color: isSelected
+              ? Color(0xff9cd8ff)
+              : Color.fromARGB(255, 75, 116, 144).withOpacity(0.3),
           borderRadius: BorderRadius.circular(25),
         ),
         child: Center(
@@ -90,47 +116,51 @@ class _SignUpState extends State<SignUp> {
               password(),
               const SizedBox(height: 20),
               Text("Interests"),
-                    SizedBox(height: 10),
-                    Wrap(
-                      alignment: WrapAlignment.spaceBetween,
-                      runSpacing: 10,
-                      children: interests.map((interest) => SizedBox(
-                        width: (MediaQuery.of(context).size.width - 80) / 3,
-                        child: buildToggleButton(
-                          interest,
-                          selectedInterests.contains(interest),
-                          () => setState(() {
-                            if (selectedInterests.contains(interest)) {
-                              selectedInterests.remove(interest);
-                            } else {
-                              selectedInterests.add(interest);
-                            }
-                          }),
-                        ),
-                      )).toList(),
-                    ),
-                    SizedBox(height: 20),
-                    Text("Travel Preferences"),
-                    SizedBox(height: 10),
-                    Wrap(
-                      alignment: WrapAlignment.spaceBetween,
-                      runSpacing: 10,
-                      children: travelPreferences.map((style) => SizedBox(
-                        width: (MediaQuery.of(context).size.width - 80) / 3,
-                        child: buildToggleButton(
-                          style,
-                          selectedTravelPreferences.contains(style),
-                          () => setState(() {
-                            if (selectedTravelPreferences.contains(style)) {
-                              selectedTravelPreferences.remove(style);
-                            } else {
-                              selectedTravelPreferences.add(style);
-                            }
-                          }),
-                        ),
-                      )).toList(),
-                    ),
-                    SizedBox(height: 30),
+              SizedBox(height: 10),
+              Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                runSpacing: 10,
+                children: interests
+                    .map((interest) => SizedBox(
+                          width: (MediaQuery.of(context).size.width - 80) / 3,
+                          child: buildToggleButton(
+                            interest,
+                            selectedInterests.contains(interest),
+                            () => setState(() {
+                              if (selectedInterests.contains(interest)) {
+                                selectedInterests.remove(interest);
+                              } else {
+                                selectedInterests.add(interest);
+                              }
+                            }),
+                          ),
+                        ))
+                    .toList(),
+              ),
+              SizedBox(height: 20),
+              Text("Travel Preferences"),
+              SizedBox(height: 10),
+              Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                runSpacing: 10,
+                children: travelPreferences
+                    .map((style) => SizedBox(
+                          width: (MediaQuery.of(context).size.width - 80) / 3,
+                          child: buildToggleButton(
+                            style,
+                            selectedTravelPreferences.contains(style),
+                            () => setState(() {
+                              if (selectedTravelPreferences.contains(style)) {
+                                selectedTravelPreferences.remove(style);
+                              } else {
+                                selectedTravelPreferences.add(style);
+                              }
+                            }),
+                          ),
+                        ))
+                    .toList(),
+              ),
+              SizedBox(height: 30),
               ElevatedButton(
                 onPressed: submitAll,
                 child: Text("Create Account"),
@@ -151,53 +181,50 @@ class _SignUpState extends State<SignUp> {
 
   Widget firstName() {
     return TextFormField(
+      controller: firstNameController,
       decoration: InputDecoration(
         border: OutlineInputBorder(),
         labelText: "First Name",
       ),
-      onSaved: (val) => formValues.firstName = val?.trim(),
-      validator:
-          (val) =>
-              val == null || val.isEmpty ? "Please Input a First name" : null,
+      validator: (val) =>
+          val == null || val.isEmpty ? "Please Input a First name" : null,
     );
   }
 
   Widget lastName() {
     return TextFormField(
+      controller: lastNameController,
       decoration: InputDecoration(
         border: OutlineInputBorder(),
         labelText: "Last Name",
       ),
-      onSaved: (val) => formValues.lastName = val?.trim(),
-      validator:
-          (val) =>
-              val == null || val.isEmpty ? "PLease input a last name" : null,
+      validator: (val) =>
+          val == null || val.isEmpty ? "Please input a last name" : null,
     );
   }
 
   Widget userName() {
     return TextFormField(
+      controller: userNameController,
       decoration: InputDecoration(
         border: OutlineInputBorder(),
         labelText: "Username",
       ),
-      onSaved: (val) => formValues.userName = val?.trim(),
-      validator:
-          (val) =>
-              val == null || val.isEmpty ? "Please input a username" : null,
+      validator: (val) =>
+          val == null || val.isEmpty ? "Please input a username" : null,
     );
   }
 
   Widget email() {
     return TextFormField(
+      controller: emailController,
       decoration: InputDecoration(
         border: OutlineInputBorder(),
         labelText: "Email",
       ),
       keyboardType: TextInputType.emailAddress,
-      onSaved: (val) => formValues.email = val?.trim(),
       validator: (val) {
-         final emailRegex = RegExp(r"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$"); //to check if it is a valid email
+        final emailRegex = RegExp(r"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$");
         if (val == null || val.isEmpty || !emailRegex.hasMatch(val)) {
           return "Please enter a valid email format";
         }
@@ -208,38 +235,32 @@ class _SignUpState extends State<SignUp> {
 
   Widget password() {
     return TextFormField(
+      controller: passwordController,
       decoration: InputDecoration(
         border: OutlineInputBorder(),
         labelText: "Password",
       ),
       obscureText: true,
-      onSaved: (val) => formValues.password = val,
-      validator:
-          (val) =>
-              passwordRegex.hasMatch(val ?? "")
-                  ? null
-                  : "The password must have at least 6 characters, one uppercase letter, one lowercase letter, one number, and one special character.",
+      validator: (val) => passwordRegex.hasMatch(val ?? "")
+          ? null
+          : "Password must be 6+ chars, with uppercase, lowercase, number, and special character.",
     );
   }
 
   Future<void> submitAll() async {
     if (formKey.currentState?.validate() ?? false) {
-      formKey.currentState?.save();
       setState(() => errorText = null);
-      print("Selected travel preference: $selectedTravelPreferences");
-      print("Selected interests: $selectedInterests");
-
 
       try {
         String? error = await Provider.of<TravelProvider>(
           context,
           listen: false,
         ).signup(
-          firstName: formValues.firstName!,
-          lastName: formValues.lastName!,
-          userName: formValues.userName!,
-          email: formValues.email!,
-          password: formValues.password!,
+          firstName: firstNameController.text.trim(),
+          lastName: lastNameController.text.trim(),
+          userName: userNameController.text.trim(),
+          email: emailController.text.trim(),
+          password: passwordController.text,
           interests: selectedInterests,
           travelPreferences: selectedTravelPreferences,
         );
@@ -249,7 +270,6 @@ class _SignUpState extends State<SignUp> {
             errorText = error;
           });
         } else {
-          // Success
           Navigator.of(context).pushReplacementNamed('/travel_plans');
         }
       } catch (e) {
