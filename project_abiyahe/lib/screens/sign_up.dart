@@ -14,11 +14,15 @@ class _SignUpState extends State<SignUp> {
   final formKey = GlobalKey<FormState>();
   String? errorText;
 
-  late TextEditingController firstNameController;
-  late TextEditingController lastNameController;
-  late TextEditingController userNameController;
-  late TextEditingController emailController;
-  late TextEditingController passwordController;
+  final TextEditingController firstNameController = TextEditingController();
+  final TextEditingController lastNameController = TextEditingController();
+  final TextEditingController userNameController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+
+  final passwordRegex = RegExp(
+    r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{6,}$',
+  );
 
   List<String> interests = [
     "Adventure",
@@ -40,20 +44,6 @@ class _SignUpState extends State<SignUp> {
 
   List<String> selectedInterests = [];
   List<String> selectedTravelPreferences = [];
-
-  final passwordRegex = RegExp(
-    r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{6,}$',
-  );
-
-  @override
-  void initState() {
-    super.initState();
-    firstNameController = TextEditingController();
-    lastNameController = TextEditingController();
-    userNameController = TextEditingController();
-    emailController = TextEditingController();
-    passwordController = TextEditingController();
-  }
 
   @override
   void dispose() {
@@ -187,7 +177,7 @@ class _SignUpState extends State<SignUp> {
         labelText: "First Name",
       ),
       validator: (val) =>
-          val == null || val.isEmpty ? "Please Input a First name" : null,
+          val == null || val.isEmpty ? "Please input a first name" : null,
     );
   }
 
