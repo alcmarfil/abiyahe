@@ -1,4 +1,5 @@
 import 'package:project_abiyahe/firebase_options.dart';
+import 'package:project_abiyahe/providers/friends_provider.dart';
 import 'package:project_abiyahe/screens/add_travel_plan_page.dart';
 import 'package:project_abiyahe/screens/similar_people_page.dart';
 import 'package:project_abiyahe/screens/travel_plans_page.dart';
@@ -28,6 +29,7 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => TravelProvider()),
         ChangeNotifierProvider(create: (_) => UserProvider()),
         ChangeNotifierProvider(create: (_) => TravelPlanProvider()),
+        ChangeNotifierProvider(create: (_) => FriendsProvider()),
       ],
       child: const MyApp(),
     ),

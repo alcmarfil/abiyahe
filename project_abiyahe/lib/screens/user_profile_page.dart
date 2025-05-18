@@ -6,6 +6,7 @@ import 'package:project_abiyahe/screens/edit_profile_page.dart';
 import 'package:project_abiyahe/providers/user_provider.dart';
 import 'package:project_abiyahe/providers/firebase_provider.dart';
 import 'package:project_abiyahe/providers/travel_plan_provider.dart';
+import 'package:project_abiyahe/screens/friends_list_page.dart';
 import 'package:provider/provider.dart';
 
 class UserDetailsPage extends StatefulWidget {
@@ -465,7 +466,13 @@ class UserDetailsPageState extends State<UserDetailsPage> {
                 ),
                 const SizedBox(height: 4),
                 InkWell(
-                  onTap: () {}, // to be implemented
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => FriendsListPage(),
+                      ),
+                    );
+                  }, 
                   child: Text(
                     "${friends.length} friend${friends.length == 1 ? "" : "s"}",
                     style: const TextStyle(
@@ -500,7 +507,7 @@ class UserDetailsPageState extends State<UserDetailsPage> {
     required VoidCallback onFindSimilar,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10.2, vertical: 10.0),
+      padding: const EdgeInsets.symmetric(horizontal: 9.2, vertical: 10.0),
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
@@ -513,7 +520,7 @@ class UserDetailsPageState extends State<UserDetailsPage> {
             ),
           ],
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         child: Row(
           children: [
             // Switch and label
@@ -531,7 +538,7 @@ class UserDetailsPageState extends State<UserDetailsPage> {
                           fontSize: 14,
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      // const SizedBox(width: 5),
                       Switch(
                         value: isPublic,
                         onChanged: onToggle,
@@ -551,7 +558,7 @@ class UserDetailsPageState extends State<UserDetailsPage> {
                   backgroundColor: Color(0xff73c7ff),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
+                    horizontal: 8,
                     vertical: 5,
                   ),
                   shape: RoundedRectangleBorder(
@@ -561,7 +568,7 @@ class UserDetailsPageState extends State<UserDetailsPage> {
                 ),
                 child: const Text(
                   "Find similar people",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.5),
                 ),
               ),
             ),

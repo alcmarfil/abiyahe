@@ -438,7 +438,7 @@ class _TravelDetailsState extends State<TravelDetails>
               controller: _tabController,
               children: [
                 // Details Tab
-                Padding(
+                SingleChildScrollView(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
                     children: [
