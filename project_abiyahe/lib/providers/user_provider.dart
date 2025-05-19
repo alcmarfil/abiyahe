@@ -148,4 +148,8 @@ class UserProvider extends ChangeNotifier {
     await firebaseService.updateUserIsPublic(uid, isPublic);
     notifyListeners();
   }
+
+  Future<Map<String, dynamic>?> getUserByUsername(String username) async {
+    return await firebaseService.getUserByUsername(username);
+  }
 } 

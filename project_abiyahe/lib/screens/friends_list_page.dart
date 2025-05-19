@@ -13,8 +13,8 @@ class _FriendsListPageState extends State<FriendsListPage> {
   @override
   void initState() {
     super.initState();
-    // Load friends when the page is first created
-    Future.microtask(() => 
+   // microtask is used to load the friends list in the background
+   Future.microtask(() => 
       context.read<FriendsProvider>().loadFriends()
     );
   }
@@ -31,6 +31,7 @@ class _FriendsListPageState extends State<FriendsListPage> {
           ),
         ],
       ),
+      //consumer widget to listen to the friends provider
       body: Consumer<FriendsProvider>(
         builder: (context, friendsProvider, child) {
           if (friendsProvider.isLoading) {
@@ -61,10 +62,10 @@ class _FriendsListPageState extends State<FriendsListPage> {
 
           return ListView.builder(
             itemCount: friendsProvider.friends.length,
-            itemBuilder: (context, index) {
+        itemBuilder: (context, index) {
               final friend = friendsProvider.friends[index];
-              return ListTile(
-                leading: CircleAvatar(
+          return ListTile(
+            leading: CircleAvatar(
                   backgroundImage: friend.profilePictureUrl != null
                       ? NetworkImage(friend.profilePictureUrl!)
                       : const AssetImage('assets/default_pic.jpg') as ImageProvider,

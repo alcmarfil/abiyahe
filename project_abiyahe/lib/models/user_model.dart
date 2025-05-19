@@ -10,7 +10,7 @@ class User {
   String? phoneNumber;
   List<String>? friends;
   bool? isPublic;
-  List<String>? pendingRequests;
+  List<String>? sentRequests;
   List<String>? receivedRequests;
 
 
@@ -26,7 +26,7 @@ class User {
     this.phoneNumber,
     this.friends,
     this.isPublic,
-    this.pendingRequests,
+    this.sentRequests,
     this.receivedRequests,
   });
 

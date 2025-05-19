@@ -10,7 +10,15 @@ import 'package:project_abiyahe/screens/friends_list_page.dart';
 import 'package:provider/provider.dart';
 
 class UserDetailsPage extends StatefulWidget {
-  const UserDetailsPage({super.key});
+  final String? targetUsername;
+  final bool isReadOnly;
+
+  const UserDetailsPage({
+    super.key,
+    // not required parameters
+    this.targetUsername, // pass the username to the user details page
+    this.isReadOnly = false, // if true, the user details page is read only
+  });
 
   @override
   UserDetailsPageState createState() => UserDetailsPageState();
@@ -43,7 +51,6 @@ class UserDetailsPageState extends State<UserDetailsPage> {
   bool _isInitialized = false;
   List<String> friends = [];
 
-
   @override
   void initState() {
     super.initState();
@@ -66,9 +73,22 @@ class UserDetailsPageState extends State<UserDetailsPage> {
 
     try {
       final userProvider = context.read<UserProvider>();
-      final currentUserId = await userProvider.getCurrentUserId();
-      
-      if (currentUserId == null) {
+      String? userId;
+
+      if (widget.targetUsername != null) {
+        // get user if the user id is provided
+        final userData =
+            await userProvider.getUserByUsername(widget.targetUsername!);
+        if (userData != null) {
+          // get user id
+          userId = userData['userId'];
+        }
+      } else {
+        // if no user id is provided, get the current user id
+        userId = await userProvider.getCurrentUserId();
+      }
+
+      if (userId == null) {
         setState(() {
           isLoading = false;
           errorMessage = "No user logged in";
@@ -76,9 +96,10 @@ class UserDetailsPageState extends State<UserDetailsPage> {
         return;
       }
 
-      await userProvider.getUserDetails(currentUserId);
+      // get user details
+      await userProvider.getUserDetails(userId);
       final userDetails = userProvider.userDetails;
-      
+
       if (userDetails != null) {
         setState(() {
           firstName = userDetails['firstName'];
@@ -88,7 +109,8 @@ class UserDetailsPageState extends State<UserDetailsPage> {
           userName = userDetails['userName'];
           profilePictureUrl = userDetails['profilePictureUrl'];
           interests = List<String>.from(userDetails['interests'] ?? []);
-          travelPreferences = List<String>.from(userDetails['travelPreferences'] ?? []);
+          travelPreferences =
+              List<String>.from(userDetails['travelPreferences'] ?? []);
           isPublic = userDetails['isPublic'] ?? true;
           friends = List<String>.from(userDetails['friends'] ?? []);
           isLoading = false;
@@ -109,7 +131,7 @@ class UserDetailsPageState extends State<UserDetailsPage> {
 
   Widget buildInterestsSection(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final itemWidth =  (screenWidth-10) / 4; // 4 items per row + padding
+    final itemWidth = (screenWidth - 10) / 4; // 4 items per row + padding
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 14.0),
@@ -152,62 +174,58 @@ class UserDetailsPageState extends State<UserDetailsPage> {
                 ),
               ],
             ),
-            child: 
-            Align(
+            child: Align(
               alignment: Alignment.center,
               child: Wrap(
                 alignment: WrapAlignment.center,
                 spacing: 12,
                 runSpacing: 13,
-                children:
-                    interests!.map((interest) {
-                      final iconPath =
-                          interestsIcons[interest]; // <-- map label to img!
-                      return InkWell(
-                        onTapDown:
-                            (_) => setState(() => pressedInterest = interest),
-                        onTapUp: (_) => setState(() => pressedInterest = null),
-                        onTapCancel:
-                            () => setState(() => pressedInterest = null),
-                        borderRadius: BorderRadius.circular(20),
-                        child: Material(
-                          color: Colors.transparent,
-                          child: Container(
-                            width: itemWidth,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal:1,
-                              vertical: 8,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Color(0xff73c7ff),
-                              borderRadius: BorderRadius.circular(20),
-                              boxShadow:
-                                  pressedInterest == interest
-                                      ? [
-                                        BoxShadow(
-                                          color: const Color.fromARGB(
-                                            255,
-                                            169,
-                                            209,
-                                            241,
-                                          ),
-                                          blurRadius: 4,
-                                          offset: Offset(1, 3),
-                                        ),
-                                      ]
-                                      : [],
-                            ),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                if (iconPath != null)
-                                  Image.asset(iconPath, width: 45, height: 45),
-                              ],
-                            ),
-                          ),
+                children: interests!.map((interest) {
+                  final iconPath =
+                      interestsIcons[interest]; // <-- map label to img!
+                  return InkWell(
+                    onTapDown: (_) =>
+                        setState(() => pressedInterest = interest),
+                    onTapUp: (_) => setState(() => pressedInterest = null),
+                    onTapCancel: () => setState(() => pressedInterest = null),
+                    borderRadius: BorderRadius.circular(20),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: Container(
+                        width: itemWidth,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 1,
+                          vertical: 8,
                         ),
-                      );
-                    }).toList(),
+                        decoration: BoxDecoration(
+                          color: Color(0xff73c7ff),
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: pressedInterest == interest
+                              ? [
+                                  BoxShadow(
+                                    color: const Color.fromARGB(
+                                      255,
+                                      169,
+                                      209,
+                                      241,
+                                    ),
+                                    blurRadius: 4,
+                                    offset: Offset(1, 3),
+                                  ),
+                                ]
+                              : [],
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (iconPath != null)
+                              Image.asset(iconPath, width: 45, height: 45),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
               ),
             ),
           ),
@@ -218,8 +236,8 @@ class UserDetailsPageState extends State<UserDetailsPage> {
 
   Widget buildTravelStylesSection(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final itemWidth =
-        (screenWidth - 64 - 24) / 2; // 2 per row, 32px padding each side, 24px spacing
+    final itemWidth = (screenWidth - 64 - 24) /
+        2; // 2 per row, 32px padding each side, 24px spacing
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 14.0),
@@ -268,27 +286,26 @@ class UserDetailsPageState extends State<UserDetailsPage> {
               alignment: WrapAlignment.center,
               spacing: 24,
               runSpacing: 13,
-              children:
-                  travelPreferences!.map((style) {
-                    return Container(
-                      width: itemWidth,
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      decoration: BoxDecoration(
-                        color: Color(0xff73c7ff),
-                        borderRadius: BorderRadius.circular(40),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        style,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                          color: Colors.white,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    );
-                  }).toList(),
+              children: travelPreferences!.map((style) {
+                return Container(
+                  width: itemWidth,
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Color(0xff73c7ff),
+                    borderRadius: BorderRadius.circular(40),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    style,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Colors.white,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                );
+              }).toList(),
             ),
           ),
         ],
@@ -404,9 +421,11 @@ class UserDetailsPageState extends State<UserDetailsPage> {
                 radius: 55,
                 backgroundImage: imageFile != null
                     ? FileImage(imageFile!)
-                    : (profilePictureUrl != null && profilePictureUrl!.isNotEmpty
-                        ? NetworkImage(profilePictureUrl!)
-                        : const AssetImage('assets/default_pic.jpg')) as ImageProvider,
+                    : (profilePictureUrl != null &&
+                                profilePictureUrl!.isNotEmpty
+                            ? NetworkImage(profilePictureUrl!)
+                            : const AssetImage('assets/default_pic.jpg'))
+                        as ImageProvider,
                 child: null,
               ),
               IconButton(
@@ -415,8 +434,9 @@ class UserDetailsPageState extends State<UserDetailsPage> {
                     color: Colors.white,
                     shape: BoxShape.circle,
                   ),
-                  padding: const EdgeInsets.all(5), 
-                  child: const Icon(Icons.camera_alt, color: Colors.blue, size: 18),
+                  padding: const EdgeInsets.all(5),
+                  child: const Icon(Icons.camera_alt,
+                      color: Colors.blue, size: 18),
                 ),
                 onPressed: () async {
                   final snackBar = SnackBar(
@@ -425,7 +445,8 @@ class UserDetailsPageState extends State<UserDetailsPage> {
                       children: [
                         TextButton.icon(
                           icon: Icon(Icons.camera_alt, color: Colors.blue),
-                          label: Text('Camera', style: TextStyle(color: Colors.blue)),
+                          label: Text('Camera',
+                              style: TextStyle(color: Colors.blue)),
                           onPressed: () async {
                             ScaffoldMessenger.of(context).hideCurrentSnackBar();
                             await _pickImage(ImageSource.camera);
@@ -433,7 +454,8 @@ class UserDetailsPageState extends State<UserDetailsPage> {
                         ),
                         TextButton.icon(
                           icon: Icon(Icons.photo, color: Colors.blue),
-                          label: Text('Gallery', style: TextStyle(color: Colors.blue)),
+                          label: Text('Gallery',
+                              style: TextStyle(color: Colors.blue)),
                           onPressed: () async {
                             ScaffoldMessenger.of(context).hideCurrentSnackBar();
                             await _pickImage(ImageSource.gallery);
@@ -465,25 +487,26 @@ class UserDetailsPageState extends State<UserDetailsPage> {
                   ),
                 ),
                 const SizedBox(height: 4),
-                InkWell(
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => FriendsListPage(),
+                if (!widget.isReadOnly)
+                  InkWell(
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => FriendsListPage(),
+                        ),
+                      );
+                    },
+                    child: Text(
+                      "${friends.length} friend${friends.length == 1 ? "" : "s"}",
+                      style: const TextStyle(
+                        fontSize: 15,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w500,
+                        decoration: TextDecoration.underline,
+                        decorationColor: Colors.white,
                       ),
-                    );
-                  }, 
-                  child: Text(
-                    "${friends.length} friend${friends.length == 1 ? "" : "s"}",
-                    style: const TextStyle(
-                      fontSize: 15,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w500,
-                      decoration: TextDecoration.underline,
-                      decorationColor: Colors.white,
                     ),
                   ),
-                ),
               ],
             ),
           ),
@@ -616,7 +639,6 @@ class UserDetailsPageState extends State<UserDetailsPage> {
 
     var selectedIndex = 3;
     return Scaffold(
-      // drawer: DrawerWidget(),
       backgroundColor: Colors.white,
       body: SingleChildScrollView(
         child: ConstrainedBox(
@@ -712,65 +734,71 @@ class UserDetailsPageState extends State<UserDetailsPage> {
                     if (interests != null && interests!.isNotEmpty)
                       buildInterestsSection(context),
                     const SizedBox(height: 16),
-                    if (travelPreferences != null && travelPreferences!.isNotEmpty)
+                    if (travelPreferences != null &&
+                        travelPreferences!.isNotEmpty)
                       buildTravelStylesSection(context),
                     const SizedBox(height: 16),
-                    publicProfileAndFindButton(
-                      isPublic: isPublic ?? true,
-                      onToggle: (val) async {
-                        setState(() => isPublic = val);
-                        try {
-                          await context.read<UserProvider>().updateUserIsPublic(val);
-                        } catch (e) {
-                          print(e);
-                        }
-                      },
-                      onFindSimilar: () {
-                        // action here
-                      },
-                    ),
+                    if (!widget.isReadOnly)
+                      publicProfileAndFindButton(
+                        isPublic: isPublic ?? true,
+                        onToggle: (val) async {
+                          setState(() => isPublic = val);
+                          try {
+                            await context
+                                .read<UserProvider>()
+                                .updateUserIsPublic(val);
+                          } catch (e) {
+                            print(e);
+                          }
+                        },
+                        onFindSimilar: () {
+                          // action here
+                        },
+                      ),
                     const SizedBox(height: 16),
                     // Sign Out Button
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                      child: Container(
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(32),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black12,
-                              blurRadius: 8,
-                              offset: Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: TextButton.icon(
-                          onPressed: () async {
-                            try {
-                              await context.read<TravelProvider>().signOut();
-                              context.read<TravelPlanProvider>().clear();
-                              Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
-                            } catch (e) {
-                              print("Error signing out: $e");
-                            }
-                          },
-                          icon: Icon(Icons.logout, color: Colors.red),
-                          label: Text(
-                            'Sign Out',
-                            style: TextStyle(
-                              color: Colors.red,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
+                    if (!widget.isReadOnly)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        child: Container(
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(32),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black12,
+                                blurRadius: 8,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
                           ),
-                          style: TextButton.styleFrom(
-                            padding: EdgeInsets.symmetric(vertical: 16),
+                          child: TextButton.icon(
+                            onPressed: () async {
+                              try {
+                                await context.read<TravelProvider>().signOut();
+                                context.read<TravelPlanProvider>().clear();
+                                Navigator.of(context).pushNamedAndRemoveUntil(
+                                    '/login', (route) => false);
+                              } catch (e) {
+                                print("Error signing out: $e");
+                              }
+                            },
+                            icon: Icon(Icons.logout, color: Colors.red),
+                            label: Text(
+                              'Sign Out',
+                              style: TextStyle(
+                                color: Colors.red,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                            style: TextButton.styleFrom(
+                              padding: EdgeInsets.symmetric(vertical: 16),
+                            ),
                           ),
                         ),
                       ),
-                    ),
                     const SizedBox(height: 32),
                   ],
                 ),
@@ -789,19 +817,19 @@ class UserDetailsPageState extends State<UserDetailsPage> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        IconButton(
-                          icon: const Icon(
-                            Icons.arrow_back,
-                            color: Colors.white,
-                            size: 32,
-                          ),
-                          onPressed: () {
-                            Navigator.of(context).pushNamedAndRemoveUntil(
-                              '/travel_plans',
-                              (route) => false,
-                            );
-                          },
-                        ),
+                        if (widget.isReadOnly)
+                          IconButton(
+                            icon: const Icon(
+                              Icons.arrow_back,
+                              color: Colors.white,
+                              size: 32,
+                            ),
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                          )
+                        else
+                          const SizedBox(width: 48),
                         Expanded(
                           child: Center(
                             child: Text(
@@ -815,24 +843,28 @@ class UserDetailsPageState extends State<UserDetailsPage> {
                             ),
                           ),
                         ),
-                        IconButton(
-                          icon: const Icon(
-                            Icons.edit,
-                            color: Colors.white,
-                            size: 28,
-                          ),
-                          onPressed: () async {
-                            final needsRefresh = await Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => const EditProfilePage(),
-                              ),
-                            );
-                            
-                            if (needsRefresh == true) {
-                              fetchUserDetails();
-                            }
-                          },
-                        ),
+                        if (!widget.isReadOnly)
+                          IconButton(
+                            icon: const Icon(
+                              Icons.edit,
+                              color: Colors.white,
+                              size: 28,
+                            ),
+                            onPressed: () async {
+                              final needsRefresh =
+                                  await Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => const EditProfilePage(),
+                                ),
+                              );
+
+                              if (needsRefresh == true) {
+                                fetchUserDetails();
+                              }
+                            },
+                          )
+                        else
+                          const SizedBox(width: 48)
                       ],
                     ),
                   ),
@@ -845,7 +877,6 @@ class UserDetailsPageState extends State<UserDetailsPage> {
       bottomNavigationBar: CustomNavBar(
         currentIndex: selectedIndex,
         onTap: (index) => (index),
-
       ),
     );
   }

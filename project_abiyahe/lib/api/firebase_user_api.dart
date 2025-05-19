@@ -34,7 +34,6 @@ class FirebaseUserAPI {
           'travelPreferences': data?['travelPreferences'] ?? [],
           'friends': data?['friends'] ?? [],
           'isPublic': data?['isPublic'] ?? true,
-          'pendingRequests': data?['pendingRequests'] ?? [],
           'receivedRequests': data?['receivedRequests'] ?? [],
         };
       } else {
@@ -197,7 +196,7 @@ class FirebaseUserAPI {
     final currentUserName = currentUserDoc.data()?['userName'] ?? '';
 
     await userDoc.doc(uid).update({
-      'pendingRequests': FieldValue.arrayUnion([friendUsername]),
+      'sentRequests': FieldValue.arrayUnion([friendUsername]),
     });
     await userDoc.doc(friendId).update({
       'receivedRequests': FieldValue.arrayUnion([currentUserName]),
@@ -220,7 +219,7 @@ class FirebaseUserAPI {
     });
     await userDoc.doc(friendId).update({
       'friends': FieldValue.arrayUnion([currentUserName]),
-      'pendingRequests': FieldValue.arrayRemove([currentUserName]),
+      'receivedRequests': FieldValue.arrayRemove([currentUserName]),
     });
   }
 
@@ -235,7 +234,7 @@ class FirebaseUserAPI {
     final currentUserName = currentUserDoc.data()?['userName'] ?? '';
 
     await userDoc.doc(uid).update({
-      'pendingRequests': FieldValue.arrayRemove([friendUsername]),
+      'sentRequests': FieldValue.arrayRemove([friendUsername]),
     });
     await userDoc.doc(friendId).update({
       'receivedRequests': FieldValue.arrayRemove([
@@ -246,5 +245,22 @@ class FirebaseUserAPI {
 
   Future<void> updateUserIsPublic(String uid, bool isPublic) async {
     await db.collection('Users').doc(uid).update({'isPublic': isPublic});
+  }
+
+  Future<Map<String, dynamic>?> getUserByUsername(String username) async {
+    try {
+      final querySnapshot = await db
+          .collection('Users')
+          .where('userName', isEqualTo: username)
+          .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        return querySnapshot.docs.first.data();
+      }
+      return null;
+    } catch (e) {
+      print('Error getting user by username: $e');
+      return null;
+    }
   }
 }
