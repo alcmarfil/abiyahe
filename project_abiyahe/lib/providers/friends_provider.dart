@@ -22,9 +22,9 @@ class FriendsProvider with ChangeNotifier {
     try {
       final userId = await _userAPI.getCurrentUserId();
       if (userId != null) {
-          _friends = await _friendsAPI.getFriendsList(userId);
-          print('friends: $_friends');
-        } else {
+        _friends = await _friendsAPI.getFriendsList(userId);
+        print('friends: $_friends');
+      } else {
         _error = 'User not found';
       }
     } catch (e) {
@@ -34,4 +34,34 @@ class FriendsProvider with ChangeNotifier {
     _isLoading = false;
     notifyListeners();
   }
-} 
+
+  Future<void> acceptFriendRequest(String username) async {
+    try {
+      final userId = await _userAPI.getCurrentUserId();
+      if (userId != null) {
+        await _userAPI.acceptFriendRequest(userId, username);
+        await loadFriends();
+      } else {
+        _error = 'User not found';
+      }
+    } catch (e) {
+      _error = 'Error accepting friend request: $e';
+    }
+    notifyListeners();
+  }
+
+  Future<void> declineFriendRequest(String username) async {
+    try {
+      final userId = await _userAPI.getCurrentUserId();
+      if (userId != null) {
+        await _userAPI.declineFriendRequest(userId, username);
+        await loadFriends();
+      } else {
+        _error = 'User not found';
+      }
+    } catch (e) {
+      _error = 'Error declining friend request: $e';
+    }
+    notifyListeners();
+  }
+}
