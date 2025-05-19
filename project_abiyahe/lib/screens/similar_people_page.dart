@@ -3,6 +3,7 @@ import 'package:project_abiyahe/api/firebase_user_api.dart';
 import 'package:project_abiyahe/common/drawer.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:project_abiyahe/common/navbar.dart';
+import 'package:project_abiyahe/screens/friend_requests.dart';
 
 class SimilarUser {
   final String userName;
@@ -107,21 +108,27 @@ class _FindSimilarPeoplePageState extends State<FindSimilarPeoplePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // drawer: const DrawerWidget(),
       appBar: AppBar(
         toolbarHeight: 70,
         title: const Text(
           "Find Similar People",
-          style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+          style: TextStyle(
+              color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
         ),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 32.0),
             child: IconButton(
-              icon: const Icon(Icons.mail_outline, color: Colors.white, size: 30),
+              icon:
+                  const Icon(Icons.mail_outline, color: Colors.white, size: 30),
               tooltip: 'Friend Requests',
               onPressed: () {
-                // TODO: Navigate to friend requests page
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const FriendRequestsPage(),
+                  ),
+                );
               },
             ),
           ),
@@ -135,7 +142,8 @@ class _FindSimilarPeoplePageState extends State<FindSimilarPeoplePage> {
                   padding: const EdgeInsets.all(16.0),
                   child: GridView.builder(
                     itemCount: similarPeople.length,
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
                       mainAxisSpacing: 24,
                       crossAxisSpacing: 24,
@@ -221,7 +229,31 @@ class _FindSimilarPeoplePageState extends State<FindSimilarPeoplePage> {
               ),
               icon: const Icon(Icons.person_add, color: Color(0xff25b1ff)),
               label: const Text("Add friend"),
-              onPressed: () {},
+              onPressed: () async {
+                try {
+                  final userId = await _firebaseUserAPI.getCurrentUserId();
+                  if (userId == null) return;
+
+                  final currentUser = await _firebaseUserAPI.getUserDetails(
+                    userId,
+                  );
+                  if (currentUser == null) return;
+
+                  await _firebaseUserAPI.sendFriendRequest(
+                    userId,
+                    user.userName,
+                  );
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Friend request sent to ${user.userName}'),
+                    ),
+                  );
+                } catch (e) {
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text('Error: $e')));
+                }
+              },
             ),
           ),
         ],
