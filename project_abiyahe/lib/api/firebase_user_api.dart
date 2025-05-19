@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-
 class FirebaseUserAPI {
   static final FirebaseFirestore db = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -34,7 +33,9 @@ class FirebaseUserAPI {
           'interests': data?['interests'] ?? [],
           'travelPreferences': data?['travelPreferences'] ?? [],
           'friends': data?['friends'] ?? [],
-          'isPublic': data?['isPublic'] ?? true
+          'isPublic': data?['isPublic'] ?? true,
+          'pendingRequests': data?['pendingRequests'] ?? [],
+          'receivedRequests': data?['receivedRequests'] ?? [],
         };
       } else {
         return null;
@@ -55,8 +56,7 @@ class FirebaseUserAPI {
     required List<String> interests,
     required List<String> travelPreferences,
   }) async {
-    try { 
-      
+    try {
       //update the attributes
       await db.collection('Users').doc(uid).update({
         'firstName': firstName,
@@ -84,7 +84,8 @@ class FirebaseUserAPI {
     return _auth.authStateChanges();
   }
 
-  Future<bool> canShareWithFriends(String currentUserId, List<String> usernames) async {
+  Future<bool> canShareWithFriends(
+      String currentUserId, List<String> usernames) async {
     final userDoc = await db.collection('Users').doc(currentUserId).get();
     final friends = List<String>.from(userDoc.data()?['friends'] ?? []);
     // Check if all usernames are in friends
@@ -185,8 +186,65 @@ class FirebaseUserAPI {
     }
   }
 
+  Future<void> sendFriendRequest(String uid, String friendUsername) async {
+    final userDoc = db.collection('Users');
+    final friendDoc = await db
+        .collection('Users')
+        .where('userName', isEqualTo: friendUsername)
+        .get();
+    final friendId = friendDoc.docs.first.id;
+    final currentUserDoc = await userDoc.doc(uid).get();
+    final currentUserName = currentUserDoc.data()?['userName'] ?? '';
+
+    await userDoc.doc(uid).update({
+      'pendingRequests': FieldValue.arrayUnion([friendUsername]),
+    });
+    await userDoc.doc(friendId).update({
+      'receivedRequests': FieldValue.arrayUnion([currentUserName]),
+    });
+  }
+
+  Future<void> acceptFriendRequest(String uid, String friendUsername) async {
+    final userDoc = db.collection('Users');
+    final friendDoc = await db
+        .collection('Users')
+        .where('userName', isEqualTo: friendUsername)
+        .get();
+    final friendId = friendDoc.docs.first.id;
+    final currentUserDoc = await userDoc.doc(uid).get();
+    final currentUserName = currentUserDoc.data()?['userName'] ?? '';
+
+    await userDoc.doc(uid).update({
+      'friends': FieldValue.arrayUnion([friendUsername]),
+      'receivedRequests': FieldValue.arrayRemove([friendUsername]),
+    });
+    await userDoc.doc(friendId).update({
+      'friends': FieldValue.arrayUnion([currentUserName]),
+      'pendingRequests': FieldValue.arrayRemove([currentUserName]),
+    });
+  }
+
+  Future<void> declineFriendRequest(String uid, String friendUsername) async {
+    final userDoc = db.collection('Users');
+    final friendDoc = await db
+        .collection('Users')
+        .where('userName', isEqualTo: friendUsername)
+        .get();
+    final friendId = friendDoc.docs.first.id;
+    final currentUserDoc = await userDoc.doc(uid).get();
+    final currentUserName = currentUserDoc.data()?['userName'] ?? '';
+
+    await userDoc.doc(uid).update({
+      'pendingRequests': FieldValue.arrayRemove([friendUsername]),
+    });
+    await userDoc.doc(friendId).update({
+      'receivedRequests': FieldValue.arrayRemove([
+        currentUserName,
+      ]),
+    });
+  }
+
   Future<void> updateUserIsPublic(String uid, bool isPublic) async {
     await db.collection('Users').doc(uid).update({'isPublic': isPublic});
   }
 }
-
