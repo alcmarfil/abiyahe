@@ -7,6 +7,7 @@ import 'package:project_abiyahe/providers/user_provider.dart';
 import 'package:project_abiyahe/providers/firebase_provider.dart';
 import 'package:project_abiyahe/providers/travel_plan_provider.dart';
 import 'package:project_abiyahe/screens/friends_list_page.dart';
+import 'package:project_abiyahe/screens/similar_people_page.dart';
 import 'package:provider/provider.dart';
 
 class UserDetailsPage extends StatefulWidget {
@@ -33,13 +34,14 @@ class UserDetailsPageState extends State<UserDetailsPage> {
   String? profilePictureUrl;
   List<String>? interests;
   final Map<String, String> interestsIcons = {
-    "Food": "assets/coffee_icon.png",
-    "Science": "assets/science_icon.png",
-    "Music": "assets/books_icon.png",
-    "Travel": "assets/travel_icon.png",
-    "Art": "assets/art_icon.png",
-    "Books": "assets/books_icon.png",
+    "Food": "assets/food_icon.png",
+    "Adventure": "assets/adventure_icon.png",
+    "Beach": "assets/beach_icon.png",
+    "Culture": "assets/culture_icon.png",
+    "Nature": "assets/nature_icon.png",
+    "Relaxation": "assets/relaxation_icon.png",
   };
+
 
   List<String>? travelPreferences;
   String? hoveredInterest;
@@ -314,6 +316,9 @@ class UserDetailsPageState extends State<UserDetailsPage> {
   }
 
   Widget contactInfoCard(BuildContext context) {
+    if (widget.isReadOnly) {
+      return const SizedBox.shrink();
+    }
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 5, 20, 0),
       child: Container(
@@ -428,10 +433,11 @@ class UserDetailsPageState extends State<UserDetailsPage> {
                         as ImageProvider,
                 child: null,
               ),
-              IconButton(
-                icon: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
+              if (!widget.isReadOnly)
+                IconButton(
+                  icon: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
                     shape: BoxShape.circle,
                   ),
                   padding: const EdgeInsets.all(5),
@@ -752,7 +758,11 @@ class UserDetailsPageState extends State<UserDetailsPage> {
                           }
                         },
                         onFindSimilar: () {
-                          // action here
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const FindSimilarPeoplePage(),
+                            ),
+                          );
                         },
                       ),
                     const SizedBox(height: 16),

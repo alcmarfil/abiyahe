@@ -372,7 +372,7 @@ class EditProfilePageState extends State<EditProfilePage> {
                             colorHex: "0xFFd3eaff",
                             validator: (textvalue) {
                               if (textvalue == null || textvalue.isEmpty) {
-                                return "Phone number is required!";
+                                return null; // Allow empty values
                               }
                               // regex for phone number
                               final phoneRegex = RegExp(r'^(09|\+639)\d{9}$');

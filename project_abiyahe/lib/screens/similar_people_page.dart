@@ -75,11 +75,14 @@ class _FindSimilarPeoplePageState extends State<FindSimilarPeoplePage> {
                 crossAxisCount: 2,
                 mainAxisSpacing: 24,
                 crossAxisSpacing: 24,
-                childAspectRatio: 0.55,
+                childAspectRatio: 0.8,
               ),
               itemBuilder: (context, index) {
                 final user = provider.similarUsers[index];
-                return _buildUserCard(context, user, provider);
+                return SizedBox(
+                  height: 240,
+                  child: _buildUserCard(context, user, provider),
+                );
               },
             ),
           );
