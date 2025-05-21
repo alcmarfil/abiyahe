@@ -8,11 +8,8 @@ class FirebaseFriendsAPI {
   Future<List<Friend>> getFriendsList(String userId) async {
     try {
       // get the user document
-      final userDoc = await _firestore
-          .collection('Users')
-          .doc(userId)
-          .get();
-      
+      final userDoc = await _firestore.collection('Users').doc(userId).get();
+
       if (!userDoc.exists) {
         return [];
       }
@@ -21,7 +18,7 @@ class FirebaseFriendsAPI {
       final List<dynamic> friendsList = userData['friends'] ?? [];
       // print('friendsList: $friendsList');
       List<Friend> friends = [];
-      
+
       // For each username in the user's friends list
       for (var username in friendsList) {
         // query users collection to find the user with this username
@@ -29,7 +26,7 @@ class FirebaseFriendsAPI {
             .collection('Users')
             .where('userName', isEqualTo: username)
             .get();
-        
+
         if (querySnapshot.docs.isNotEmpty) {
           final friendData = querySnapshot.docs.first.data();
           friends.add(Friend.fromMap({
@@ -51,13 +48,17 @@ class FirebaseFriendsAPI {
 
   Future<List<SimilarUser>> getSimilarUsers(String userId) async {
     try {
-      final currentUserDoc = await _firestore.collection('Users').doc(userId).get();
+      final currentUserDoc =
+          await _firestore.collection('Users').doc(userId).get();
       if (!currentUserDoc.exists) return [];
 
       final currentUserData = currentUserDoc.data()!;
-      final currentInterests = List<String>.from(currentUserData['interests'] ?? []);
-      final currentPrefs = List<String>.from(currentUserData['travelPreferences'] ?? []);
-      final currentFriends = List<String>.from(currentUserData['friends'] ?? []);
+      final currentInterests =
+          List<String>.from(currentUserData['interests'] ?? []);
+      final currentPrefs =
+          List<String>.from(currentUserData['travelPreferences'] ?? []);
+      final currentFriends =
+          List<String>.from(currentUserData['friends'] ?? []);
 
       final users = await _firestore.collection('Users').get();
       List<SimilarUser> matches = [];
@@ -79,10 +80,12 @@ class FirebaseFriendsAPI {
           continue;
         }
 
-        final sameInterests = currentInterests.where(interests.contains).toList();
-        final samePreferences = currentPrefs.where(preferences.contains).toList();
+        final sameInterests =
+            currentInterests.where(interests.contains).toList();
+        final samePreferences =
+            currentPrefs.where(preferences.contains).toList();
 
-        if (sameInterests.isNotEmpty && samePreferences.isNotEmpty) {
+        if (sameInterests.isNotEmpty || samePreferences.isNotEmpty) {
           matches.add(
             SimilarUser(
               userName: userName.isNotEmpty ? userName : 'Username doko?',
@@ -131,7 +134,8 @@ class FirebaseFriendsAPI {
       final targetUserId = usersQuery.docs.first.id;
 
       // get the sender's username
-      final senderDoc = await _firestore.collection('Users').doc(senderId).get();
+      final senderDoc =
+          await _firestore.collection('Users').doc(senderId).get();
       final senderUserName = senderDoc.data()?['userName'];
 
       // add to sent requests in sender's document
@@ -149,7 +153,8 @@ class FirebaseFriendsAPI {
     }
   }
 
-  Future<void> acceptFriendRequest(String receiverId, String senderUsername) async {
+  Future<void> acceptFriendRequest(
+      String receiverId, String senderUsername) async {
     // Get sender's user document by username
     final senderQuery = await _firestore
         .collection('Users')
@@ -159,23 +164,25 @@ class FirebaseFriendsAPI {
     final senderId = senderQuery.docs.first.id;
 
     // Get receiver's username
-    final receiverDoc = await _firestore.collection('Users').doc(receiverId).get();
+    final receiverDoc =
+        await _firestore.collection('Users').doc(receiverId).get();
     final receiverUsername = receiverDoc.data()?['userName'];
 
-    print('Receiver sentRequests before: ${receiverDoc.data()?['sentRequests']}');
+    print(
+        'Receiver sentRequests before: ${receiverDoc.data()?['sentRequests']}');
     print('Trying to remove: $senderUsername');
 
     // Remove sender from receiver's receivedRequests
     await _firestore.collection('Users').doc(receiverId).update({
       'receivedRequests': FieldValue.arrayRemove([senderUsername]),
       'friends': FieldValue.arrayUnion([senderUsername]),
-      'sentRequests': FieldValue.arrayRemove([senderUsername]), 
+      'sentRequests': FieldValue.arrayRemove([senderUsername]),
     });
 
     await _firestore.collection('Users').doc(senderId).update({
       'sentRequests': FieldValue.arrayRemove([receiverUsername]),
-      'receivedRequests': FieldValue.arrayRemove([receiverUsername]), 
+      'receivedRequests': FieldValue.arrayRemove([receiverUsername]),
       'friends': FieldValue.arrayUnion([receiverUsername]),
     });
   }
-} 
+}
