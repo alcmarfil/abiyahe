@@ -44,27 +44,37 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
+        fontFamily: 'abiyahefont',
         dividerColor: Colors.transparent,
         colorScheme: ColorScheme.fromSeed(seedColor:  Color(0xff25b1ff)),
         appBarTheme: AppBarTheme(
           color: Color(0xff25b1ff),
-          titleTextStyle: TextStyle(color: Colors.white, fontSize: 22),
+          titleTextStyle: TextStyle(
+            color: Colors.white, 
+            fontSize: 22,
+            fontFamily: 'abiyahefont',
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
-      initialRoute: '/signup',
+      // initialRoute: '/signup',
       home: Consumer<TravelProvider>(
         builder: (context, authProvider, _) {
+          print('Building StreamBuilder with auth state');
           return StreamBuilder(
             stream: authProvider.authStateChanges(),
             builder: (context, snapshot) {
+              
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
               }
-              
-              if (snapshot.hasData) {
+            
+              if (snapshot.hasData && snapshot.data != null) {
+                print('Navigating to TravelPlansPage');
                 return const TravelPlansPage();
               }
               
+              print('Navigating to Login');
               return const Login();
             },
           );
