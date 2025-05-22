@@ -175,10 +175,12 @@ class _TravelPlanModalState extends State<TravelPlanModal> {
               children: snapshot.data!.map((user) {
                 final bool isFriend = user['isFriend'] ?? false;
                 return ListTile(
-                  title: Row(
+                  title: Column(
                     children: [
                       Text(user['username'] ?? 'Unknown User'),
-                      Text(isFriend ? ' (Friend)' : ' (Stranger)'),
+                      Text(isFriend ? ' (Friend)': ' (Stranger)',
+                           style:
+                            const TextStyle(fontSize: 12, color: Colors.grey),),
                     ],
                   ),
                   trailing: IconButton(
