@@ -397,12 +397,13 @@ class UserDetailsPageState extends State<UserDetailsPage> {
                     child: Row(
                       children: [
                         const Icon(Icons.phone, color: Colors.black87),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 2),
                         Text(
                           phoneNumber ?? "",
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             color: Colors.black87,
+                            fontSize: 13,
                           ),
                         ),
                       ],
@@ -805,7 +806,7 @@ class UserDetailsPageState extends State<UserDetailsPage> {
               SingleChildScrollView(
                 child: Column(
                   children: [
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 50),
                     profilePicture(context),
                     const SizedBox(height: 24),
                     contactInfoCard(context),
