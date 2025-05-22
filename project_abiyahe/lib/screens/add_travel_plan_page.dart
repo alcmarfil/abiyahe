@@ -9,6 +9,7 @@ import 'package:syncfusion_flutter_datepicker/datepicker.dart';
 import 'package:provider/provider.dart';
 import 'package:project_abiyahe/providers/user_provider.dart';
 import 'package:project_abiyahe/screens/plan_details.dart';
+import 'package:project_abiyahe/config/api_config.dart';
 
 
 class AddTravelPlanPage extends StatefulWidget {
@@ -41,7 +42,7 @@ class _AddTravelPlanPageState extends State<AddTravelPlanPage> {
   /// display names.
   Future<List<String>> _searchPlaces(String query) async {
     final url = Uri.parse(
-      'https://nominatim.openstreetmap.org/search?q=$query&format=json&addressdetails=1',
+      'https://us1.locationiq.com/v1/autocomplete?key=${ApiConfig.locationIqApiKey}&q=$query&format=json&limit=5',
     );
 
     final response = await http.get(

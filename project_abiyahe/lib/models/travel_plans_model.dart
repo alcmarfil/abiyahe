@@ -48,7 +48,11 @@ class TravelPlans {
             ).toList()
           : null,
       sharedWith: json['sharedWith'] != null 
-          ? (json['sharedWith'] as List).map((item) => item as String).toList()
+          ? (json['sharedWith'] as List).map((item) {
+              if (item is String) return item;
+              if (item is Map<String, dynamic>) return item['userId'] as String;
+              return item.toString();
+            }).toList()
           : null,
       reminderDaysBefore: json['reminderDaysBefore'] as int?,
     );

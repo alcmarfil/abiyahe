@@ -9,13 +9,16 @@ class TravelProvider extends ChangeNotifier {
   User? get user => _user;
 
   TravelProvider() {
+    print('TravelProvider initialized');
     _userApi.authStateChanges().listen((user) {
+      print('TravelProvider received auth state change: ${user?.uid ?? 'null'}');
       _user = user;
       notifyListeners();
     });
   }
 
   Stream<User?> authStateChanges() {
+    print('TravelProvider exposing auth state changes');
     return _userApi.authStateChanges();
   }
 
@@ -64,9 +67,15 @@ class TravelProvider extends ChangeNotifier {
   }
 
   Future<void> signOut() async {
-    await _userApi.signOut();
-    _user = null;
-    notifyListeners();
+    try {
+      print('TravelProvider starting sign out');
+      await _userApi.signOut();
+      _user = null;
+      notifyListeners();
+    } catch (e) {
+      print('Error during sign out: $e');
+      rethrow;
+    }
   }
 
   bool get isSignedIn => _user != null;

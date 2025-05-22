@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -34,6 +35,9 @@ class EditProfilePageState extends State<EditProfilePage> {
     final userDetails = userProvider.userDetails;
     
     if (userDetails != null) {
+      print('Loading user details: $userDetails');
+      print('Profile picture URL: ${userDetails['profilePictureUrl']}');
+      
       setState(() {
         _firstNameController.text = userDetails['firstName'] ?? '';
         _lastNameController.text = userDetails['lastName'] ?? '';
@@ -50,6 +54,8 @@ class EditProfilePageState extends State<EditProfilePage> {
         selectedTravelPreferences.clear();
         selectedTravelPreferences.addAll(travelPrefsList.map((e) => e.toString()));
       });
+    } else {
+      print('No user details found');
     }
   }
 
@@ -175,18 +181,53 @@ class EditProfilePageState extends State<EditProfilePage> {
   }
 
   Future<void> _pickImage(ImageSource source) async {
-    final image = await ImagePicker().pickImage(source: source);
-    if (image != null) {
-      setState(() {
-        imageFile = File(image.path);
-      });
+    try {
+      final image = await ImagePicker().pickImage(
+        source: source,
+        imageQuality: 70,
+        maxWidth: 800,
+        maxHeight: 800,
+      );
+      
+      if (image != null) {
+        final file = File(image.path);
+        final imgBytes = await file.readAsBytes();
+        final base64Image = base64Encode(imgBytes);
+        setState(() {
+          imageFile = file;
+          profilePictureUrl = base64Image;
+        });
+        try {
+          await context.read<UserProvider>().updateProfileImage(base64Image);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Profile picture updated successfully'),
+              backgroundColor: Colors.lightBlue,
+            ),
+          );
+        } catch (e) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to update profile picture: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error picking image: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xff25b1ff), // Blue background
+      backgroundColor: Color(0xff25b1ff),
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -211,7 +252,7 @@ class EditProfilePageState extends State<EditProfilePage> {
                     ),
                   ),
                 ),
-                SizedBox(width: 48), // To balance IconButton spacing
+                SizedBox(width: 48),
               ],
             ),
             SizedBox(height: 20),
@@ -231,8 +272,14 @@ class EditProfilePageState extends State<EditProfilePage> {
                       backgroundImage: imageFile != null
                           ? FileImage(imageFile!)
                           : (profilePictureUrl != null && profilePictureUrl!.isNotEmpty
-                              ? NetworkImage(profilePictureUrl!)
+                              ? MemoryImage(base64Decode(profilePictureUrl!.startsWith('data:image') 
+                                  ? profilePictureUrl!.split(',')[1] 
+                                  : profilePictureUrl!))
                               : const AssetImage('assets/default_pic.jpg')) as ImageProvider,
+                      onBackgroundImageError: (exception, stackTrace) {
+                        print('Error loading profile image: $exception');
+                        print('Stack trace: $stackTrace');
+                      },
                     ),
                   ),
                   Positioned(
@@ -372,7 +419,7 @@ class EditProfilePageState extends State<EditProfilePage> {
                             colorHex: "0xFFd3eaff",
                             validator: (textvalue) {
                               if (textvalue == null || textvalue.isEmpty) {
-                                return "Phone number is required!";
+                                return null; // Allow empty values
                               }
                               // regex for phone number
                               final phoneRegex = RegExp(r'^(09|\+639)\d{9}$');

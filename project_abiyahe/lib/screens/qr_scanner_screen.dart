@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:project_abiyahe/providers/travel_plan_provider.dart';
-import 'package:project_abiyahe/providers/user_provider.dart';
 import 'package:provider/provider.dart';
 
 class QrScannerScreen extends StatefulWidget {

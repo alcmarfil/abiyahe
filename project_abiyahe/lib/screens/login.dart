@@ -283,7 +283,7 @@ class _LoginState extends State<Login> {
       });
 
       try {
-        String? error = await Provider.of<TravelProvider>(
+        await Provider.of<TravelProvider>(
           context,
           listen: false,
         ).login(
@@ -291,17 +291,13 @@ class _LoginState extends State<Login> {
           password: passwordController.text,
           useUsername: useUsername,
         );
-
-        if (error != null) {
-          setState(() {
-            errorText = error;
-          });
-        } else {
+        // Navigate to travel plans page after successful login
+        if (context.mounted) {
           Navigator.of(context).pushReplacementNamed('/travel_plans');
         }
       } catch (e) {
         setState(() {
-          errorText = "Error occurred please try again!";
+          errorText = e.toString().replaceAll('Exception: ', '');
         });
       }
     }

@@ -30,7 +30,8 @@ class _TravelPlansPageState extends State<TravelPlansPage> {
     final uid = context.watch<UserProvider>().currentUserId;  
     if (uid != null) {  
       context.read<TravelPlanProvider>().fetchtravelplans(uid);  
-    }  
+    } 
+  
   }  
 
   @override  

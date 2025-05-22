@@ -17,12 +17,12 @@ class TravelPlanModal extends StatefulWidget {
   final List<String>? usernames;
   final bool showQRButton; // Added this parameter
   const TravelPlanModal({
-    super.key, 
-    required this.type, 
-    this.item, 
-    this.date, 
-    this.activityDate, 
-    this.activity, 
+    super.key,
+    required this.type,
+    this.item,
+    this.date,
+    this.activityDate,
+    this.activity,
     this.usernames,
     this.showQRButton = false, // Default to false
   });
@@ -89,7 +89,8 @@ class _TravelPlanModalState extends State<TravelPlanModal> {
               SfDateRangePicker(
                 selectionMode: DateRangePickerSelectionMode.range,
                 initialSelectedRange: _selectedDateRange != null
-                    ? PickerDateRange(_selectedDateRange!.start, _selectedDateRange!.end)
+                    ? PickerDateRange(
+                        _selectedDateRange!.start, _selectedDateRange!.end)
                     : null,
                 onSelectionChanged: (DateRangePickerSelectionChangedArgs args) {
                   if (args.value is PickerDateRange) {
@@ -104,7 +105,8 @@ class _TravelPlanModalState extends State<TravelPlanModal> {
                 onPressed: () {
                   if (tempStart != null && tempEnd != null) {
                     setState(() {
-                      _selectedDateRange = DateTimeRange(start: tempStart!, end: tempEnd!);
+                      _selectedDateRange =
+                          DateTimeRange(start: tempStart!, end: tempEnd!);
                     });
                     Navigator.pop(context);
                   }
@@ -161,32 +163,46 @@ class _TravelPlanModalState extends State<TravelPlanModal> {
         return FutureBuilder<List<Map<String, dynamic>>>(
           future: widget.item?.sharedWith == null
               ? Future.value([])
-              : context.read<TravelPlanProvider>().getSharedUsersDetails(widget.item!.sharedWith!),
+              : context
+                  .read<TravelPlanProvider>()
+                  .getSharedUsersDetails(widget.item!.sharedWith!),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
             }
             return Column(
               mainAxisSize: MainAxisSize.min,
-              children: snapshot.data!.map((user) => ListTile(
-                title: Text(user['username'] ?? 'Unknown User'),
-                trailing: IconButton(
-                  icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
-                  onPressed: () async {
-                    await context.read<TravelPlanProvider>().unshareTravelPlan(
-                      travelId: widget.item!.travelId!,
-                      userId: user['userId'],
-                    );
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Removed access for ${user['username']}'),
-                        backgroundColor: Colors.green,
-                      ),
-                    );
-                    Navigator.of(context).pop(true);
-                  },
-                ),
-              )).toList(),
+              children: snapshot.data!.map((user) {
+                final bool isFriend = user['isFriend'] ?? false;
+                return ListTile(
+                  title: Row(
+                    children: [
+                      Text(user['username'] ?? 'Unknown User'),
+                      Text(isFriend ? ' (Friend)' : ' (Stranger)'),
+                    ],
+                  ),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.remove_circle_outline,
+                        color: Colors.red),
+                    onPressed: () async {
+                      await context
+                          .read<TravelPlanProvider>()
+                          .unshareTravelPlan(
+                            travelId: widget.item!.travelId!,
+                            userId: user['userId'],
+                          );
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content:
+                              Text('Removed access for ${user['username']}'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                      Navigator.of(context).pop(true);
+                    },
+                  ),
+                );
+              }).toList(),
             );
           },
         );
@@ -222,9 +238,13 @@ class _TravelPlanModalState extends State<TravelPlanModal> {
                   children: [
                     Expanded(
                       child: Text(
-                        _selectedDateRange != null ? getDateRangeText() : 'Select dates',
+                        _selectedDateRange != null
+                            ? getDateRangeText()
+                            : 'Select dates',
                         style: TextStyle(
-                          color: _selectedDateRange != null ? Colors.black : Colors.grey,
+                          color: _selectedDateRange != null
+                              ? Colors.black
+                              : Colors.grey,
                         ),
                       ),
                     ),
@@ -242,7 +262,7 @@ class _TravelPlanModalState extends State<TravelPlanModal> {
             TextField(
               controller: _activityController,
               decoration: const InputDecoration(
-                border: OutlineInputBorder(), 
+                border: OutlineInputBorder(),
                 labelText: 'Activity',
               ),
             ),
@@ -250,7 +270,7 @@ class _TravelPlanModalState extends State<TravelPlanModal> {
         );
       case 'Delete Activity':
         return const Text("Are you sure you want to delete this activity?");
-     
+
       case 'Share':
         return Column(
           mainAxisSize: MainAxisSize.min,
@@ -282,7 +302,8 @@ class _TravelPlanModalState extends State<TravelPlanModal> {
           ],
         );
       case 'Remove Access':
-        return const Text('Are you sure you want to remove your access to this shared plan?');
+        return const Text(
+            'Are you sure you want to remove your access to this shared plan?');
       default:
         return const SizedBox.shrink();
     }
@@ -293,53 +314,63 @@ class _TravelPlanModalState extends State<TravelPlanModal> {
       onPressed: () async {
         switch (widget.type) {
           case 'Delete':
-            context.read<TravelPlanProvider>().deletetravelplan(widget.item!.travelId!);
+            context
+                .read<TravelPlanProvider>()
+                .deletetravelplan(widget.item!.travelId!);
             Navigator.of(context).pop(true);
             break;
           case 'Edit':
-            if (_formFieldController.text.isNotEmpty && 
-                _locationController.text.isNotEmpty && 
+            if (_formFieldController.text.isNotEmpty &&
+                _locationController.text.isNotEmpty &&
                 _selectedDateRange != null) {
               context.read<TravelPlanProvider>().editTravelplan(
-                id: widget.item!.travelId!,
-                name: _formFieldController.text,
-                location: _locationController.text,
-                startDate: _selectedDateRange!.start,
-                endDate: _selectedDateRange!.end,
-              );
+                    id: widget.item!.travelId!,
+                    name: _formFieldController.text,
+                    location: _locationController.text,
+                    startDate: _selectedDateRange!.start,
+                    endDate: _selectedDateRange!.end,
+                  );
               Navigator.of(context).pop(true);
             }
             break;
           case 'Add Activity':
-            if (_activityController.text.isNotEmpty && widget.activityDate != null) {
+            if (_activityController.text.isNotEmpty &&
+                widget.activityDate != null) {
               context.read<TravelPlanProvider>().addActivity(
-                travelId: widget.item!.travelId!,
-                activity: _activityController.text,
-                date: widget.activityDate!,
-              );
+                    travelId: widget.item!.travelId!,
+                    activity: _activityController.text,
+                    date: widget.activityDate!,
+                  );
               Navigator.of(context).pop(true);
             }
             break;
 
           case 'Delete Activity':
             context.read<TravelPlanProvider>().deleteActivity(
-              travelId: widget.item!.travelId!,
-              activity: widget.activity!,
-              date: widget.activityDate!,
-            );
+                  travelId: widget.item!.travelId!,
+                  activity: widget.activity!,
+                  date: widget.activityDate!,
+                );
             Navigator.of(context).pop(true);
             break;
 
           case 'Share':
-            final usernames = usernameController.text.split(',').map((s) => s.trim()).toList();
+            final usernames = usernameController.text
+                .split(',')
+                .map((s) => s.trim())
+                .toList();
             await context.read<TravelPlanProvider>().shareTravelPlan(
-              travelId: widget.item!.travelId!,
-              usernames: usernames,
-            );
+                  travelId: widget.item!.travelId!,
+                  usernames: usernames,
+                );
             final currentUserId = context.read<UserProvider>().currentUserId;
-            final userDoc = await FirebaseTravelPlanAPI.db.collection('Users').doc(currentUserId).get();
+            final userDoc = await FirebaseTravelPlanAPI.db
+                .collection('Users')
+                .doc(currentUserId)
+                .get();
             final friends = List<String>.from(userDoc.data()?['friends'] ?? []);
-            final validUsernames = usernames.where((u) => friends.contains(u)).toList();
+            final validUsernames =
+                usernames.where((u) => friends.contains(u)).toList();
             if (validUsernames.isEmpty) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
@@ -351,7 +382,8 @@ class _TravelPlanModalState extends State<TravelPlanModal> {
             }
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Travel plan shared with: ${validUsernames.join(', ')}'),
+                content: Text(
+                    'Travel plan shared with: ${validUsernames.join(', ')}'),
                 backgroundColor: Colors.green,
               ),
             );
@@ -362,14 +394,14 @@ class _TravelPlanModalState extends State<TravelPlanModal> {
             final userId = context.read<UserProvider>().currentUserId;
             if (userId != null && widget.item != null) {
               await context.read<TravelPlanProvider>().unshareTravelPlan(
-                travelId: widget.item!.travelId!,
-                userId: userId,
-              );
+                    travelId: widget.item!.travelId!,
+                    userId: userId,
+                  );
             }
             Navigator.of(context).pop(true);
             break;
 
-          case 'Shared Users':         
+          case 'Shared Users':
             Navigator.of(context).pop();
             break;
         }
@@ -439,13 +471,33 @@ class _TravelPlanModalState extends State<TravelPlanModal> {
         borderRadius: BorderRadius.circular(20),
       ),
       title: _buildTitle(),
-      titleTextStyle: TextStyle(color: Color(0xff25b1ff), fontSize: 20, fontWeight: FontWeight.bold),
+      titleTextStyle: TextStyle(
+          color: Color(0xff25b1ff), fontSize: 20, fontWeight: FontWeight.bold),
       content: _buildContent(context),
       contentTextStyle: TextStyle(color: Color(0xff22305A)),
       actions: <Widget>[
-        if (isOwner && (widget.type == 'Delete' || widget.type == 'Edit' || widget.type == 'Add Activity' || widget.type == 'Delete Activity' || widget.type == 'Share')) _dialogAction(context),
-        if (!isOwner && (widget.type == 'Delete' || widget.type == 'Edit' || widget.type == 'Add Activity' || widget.type == 'Delete Activity' || widget.type == 'Share' || widget.type == 'Remove Access')) _dialogAction(context),
-        if (!isOwner && (widget.type == 'Delete' || widget.type == 'Edit' || widget.type == 'Add Activity' || widget.type == 'Delete Activity' || widget.type == 'Share') && widget.type != 'Remove Access')
+        if (isOwner &&
+            (widget.type == 'Delete' ||
+                widget.type == 'Edit' ||
+                widget.type == 'Add Activity' ||
+                widget.type == 'Delete Activity' ||
+                widget.type == 'Share'))
+          _dialogAction(context),
+        if (!isOwner &&
+            (widget.type == 'Delete' ||
+                widget.type == 'Edit' ||
+                widget.type == 'Add Activity' ||
+                widget.type == 'Delete Activity' ||
+                widget.type == 'Share' ||
+                widget.type == 'Remove Access'))
+          _dialogAction(context),
+        if (!isOwner &&
+            (widget.type == 'Delete' ||
+                widget.type == 'Edit' ||
+                widget.type == 'Add Activity' ||
+                widget.type == 'Delete Activity' ||
+                widget.type == 'Share') &&
+            widget.type != 'Remove Access')
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Text(

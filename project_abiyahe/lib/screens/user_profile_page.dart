@@ -1,15 +1,28 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
+import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
 import 'package:project_abiyahe/common/navbar.dart';
 import 'package:project_abiyahe/screens/edit_profile_page.dart';
 import 'package:project_abiyahe/providers/user_provider.dart';
 import 'package:project_abiyahe/providers/firebase_provider.dart';
 import 'package:project_abiyahe/providers/travel_plan_provider.dart';
+import 'package:project_abiyahe/screens/friends_list_page.dart';
+import 'package:project_abiyahe/screens/similar_people_page.dart';
 import 'package:provider/provider.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:project_abiyahe/utils/permission_utils.dart';
 
 class UserDetailsPage extends StatefulWidget {
-  const UserDetailsPage({super.key});
+  final String? targetUsername;
+  final bool isReadOnly;
+
+  const UserDetailsPage({
+    super.key,
+    // not required parameters
+    this.targetUsername, // pass the username to the user details page
+    this.isReadOnly = false, // if true, the user details page is read only
+  });
 
   @override
   UserDetailsPageState createState() => UserDetailsPageState();
@@ -24,12 +37,12 @@ class UserDetailsPageState extends State<UserDetailsPage> {
   String? profilePictureUrl;
   List<String>? interests;
   final Map<String, String> interestsIcons = {
-    "Food": "assets/coffee_icon.png",
-    "Science": "assets/science_icon.png",
-    "Music": "assets/books_icon.png",
-    "Travel": "assets/travel_icon.png",
-    "Art": "assets/art_icon.png",
-    "Books": "assets/books_icon.png",
+    "Food": "assets/food_icon.png",
+    "Adventure": "assets/adventure_icon.png",
+    "Beach": "assets/beach_icon.png",
+    "Culture": "assets/culture_icon.png",
+    "Nature": "assets/nature_icon.png",
+    "Relaxation": "assets/relaxation_icon.png",
   };
 
   List<String>? travelPreferences;
@@ -41,7 +54,7 @@ class UserDetailsPageState extends State<UserDetailsPage> {
   String? errorMessage;
   bool _isInitialized = false;
   List<String> friends = [];
-
+  String? base64ProfileImage;
 
   @override
   void initState() {
@@ -65,9 +78,23 @@ class UserDetailsPageState extends State<UserDetailsPage> {
 
     try {
       final userProvider = context.read<UserProvider>();
-      final currentUserId = await userProvider.getCurrentUserId();
-      
-      if (currentUserId == null) {
+      String? userId;
+
+      if (widget.targetUsername != null) {
+        final userData =
+            await userProvider.getUserByUsername(widget.targetUsername!);
+        if (userData != null) {
+          userId = userData['userId'];
+          // Fetch target user's profile picture
+          base64ProfileImage = await userProvider.getProfileImageBase64(userId: userId);
+        }
+      } else {
+        userId = await userProvider.getCurrentUserId();
+        // Fetch current user's profile picture
+        base64ProfileImage = await userProvider.getProfileImageBase64();
+      }
+
+      if (userId == null) {
         setState(() {
           isLoading = false;
           errorMessage = "No user logged in";
@@ -75,9 +102,9 @@ class UserDetailsPageState extends State<UserDetailsPage> {
         return;
       }
 
-      await userProvider.getUserDetails(currentUserId);
+      await userProvider.getUserDetails(userId);
       final userDetails = userProvider.userDetails;
-      
+
       if (userDetails != null) {
         setState(() {
           firstName = userDetails['firstName'];
@@ -87,7 +114,8 @@ class UserDetailsPageState extends State<UserDetailsPage> {
           userName = userDetails['userName'];
           profilePictureUrl = userDetails['profilePictureUrl'];
           interests = List<String>.from(userDetails['interests'] ?? []);
-          travelPreferences = List<String>.from(userDetails['travelPreferences'] ?? []);
+          travelPreferences =
+              List<String>.from(userDetails['travelPreferences'] ?? []);
           isPublic = userDetails['isPublic'] ?? true;
           friends = List<String>.from(userDetails['friends'] ?? []);
           isLoading = false;
@@ -108,7 +136,7 @@ class UserDetailsPageState extends State<UserDetailsPage> {
 
   Widget buildInterestsSection(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final itemWidth =  (screenWidth-10) / 4; // 4 items per row + padding
+    final itemWidth = (screenWidth - 10) / 4; // 4 items per row + padding
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 14.0),
@@ -151,62 +179,58 @@ class UserDetailsPageState extends State<UserDetailsPage> {
                 ),
               ],
             ),
-            child: 
-            Align(
+            child: Align(
               alignment: Alignment.center,
               child: Wrap(
                 alignment: WrapAlignment.center,
                 spacing: 12,
                 runSpacing: 13,
-                children:
-                    interests!.map((interest) {
-                      final iconPath =
-                          interestsIcons[interest]; // <-- map label to img!
-                      return InkWell(
-                        onTapDown:
-                            (_) => setState(() => pressedInterest = interest),
-                        onTapUp: (_) => setState(() => pressedInterest = null),
-                        onTapCancel:
-                            () => setState(() => pressedInterest = null),
-                        borderRadius: BorderRadius.circular(20),
-                        child: Material(
-                          color: Colors.transparent,
-                          child: Container(
-                            width: itemWidth,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal:1,
-                              vertical: 8,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Color(0xff73c7ff),
-                              borderRadius: BorderRadius.circular(20),
-                              boxShadow:
-                                  pressedInterest == interest
-                                      ? [
-                                        BoxShadow(
-                                          color: const Color.fromARGB(
-                                            255,
-                                            169,
-                                            209,
-                                            241,
-                                          ),
-                                          blurRadius: 4,
-                                          offset: Offset(1, 3),
-                                        ),
-                                      ]
-                                      : [],
-                            ),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                if (iconPath != null)
-                                  Image.asset(iconPath, width: 45, height: 45),
-                              ],
-                            ),
-                          ),
+                children: interests!.map((interest) {
+                  final iconPath =
+                      interestsIcons[interest]; // <-- map label to img!
+                  return InkWell(
+                    onTapDown: (_) =>
+                        setState(() => pressedInterest = interest),
+                    onTapUp: (_) => setState(() => pressedInterest = null),
+                    onTapCancel: () => setState(() => pressedInterest = null),
+                    borderRadius: BorderRadius.circular(20),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: Container(
+                        width: itemWidth,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 1,
+                          vertical: 8,
                         ),
-                      );
-                    }).toList(),
+                        decoration: BoxDecoration(
+                          color: Color(0xff73c7ff),
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: pressedInterest == interest
+                              ? [
+                                  BoxShadow(
+                                    color: const Color.fromARGB(
+                                      255,
+                                      169,
+                                      209,
+                                      241,
+                                    ),
+                                    blurRadius: 4,
+                                    offset: Offset(1, 3),
+                                  ),
+                                ]
+                              : [],
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (iconPath != null)
+                              Image.asset(iconPath, width: 45, height: 45),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
               ),
             ),
           ),
@@ -217,8 +241,8 @@ class UserDetailsPageState extends State<UserDetailsPage> {
 
   Widget buildTravelStylesSection(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final itemWidth =
-        (screenWidth - 64 - 24) / 2; // 2 per row, 32px padding each side, 24px spacing
+    final itemWidth = (screenWidth - 64 - 24) /
+        2; // 2 per row, 32px padding each side, 24px spacing
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 14.0),
@@ -267,27 +291,26 @@ class UserDetailsPageState extends State<UserDetailsPage> {
               alignment: WrapAlignment.center,
               spacing: 24,
               runSpacing: 13,
-              children:
-                  travelPreferences!.map((style) {
-                    return Container(
-                      width: itemWidth,
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      decoration: BoxDecoration(
-                        color: Color(0xff73c7ff),
-                        borderRadius: BorderRadius.circular(40),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        style,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                          color: Colors.white,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    );
-                  }).toList(),
+              children: travelPreferences!.map((style) {
+                return Container(
+                  width: itemWidth,
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Color(0xff73c7ff),
+                    borderRadius: BorderRadius.circular(40),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    style,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Colors.white,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                );
+              }).toList(),
             ),
           ),
         ],
@@ -296,6 +319,9 @@ class UserDetailsPageState extends State<UserDetailsPage> {
   }
 
   Widget contactInfoCard(BuildContext context) {
+    if (widget.isReadOnly) {
+      return const SizedBox.shrink();
+    }
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 5, 20, 0),
       child: Container(
@@ -391,6 +417,7 @@ class UserDetailsPageState extends State<UserDetailsPage> {
   }
 
   Widget profilePicture(BuildContext context) {
+    print('Base64 image length: ${base64ProfileImage?.length}');
     return Padding(
       padding: const EdgeInsets.only(left: 32, right: 32, top: 40),
       child: Row(
@@ -401,53 +428,65 @@ class UserDetailsPageState extends State<UserDetailsPage> {
             children: [
               CircleAvatar(
                 radius: 55,
-                backgroundImage: imageFile != null
-                    ? FileImage(imageFile!)
-                    : (profilePictureUrl != null && profilePictureUrl!.isNotEmpty
-                        ? NetworkImage(profilePictureUrl!)
-                        : const AssetImage('assets/default_pic.jpg')) as ImageProvider,
-                child: null,
-              ),
-              IconButton(
-                icon: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                  ),
-                  padding: const EdgeInsets.all(5), 
-                  child: const Icon(Icons.camera_alt, color: Colors.blue, size: 18),
-                ),
-                onPressed: () async {
-                  final snackBar = SnackBar(
-                    content: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        TextButton.icon(
-                          icon: Icon(Icons.camera_alt, color: Colors.blue),
-                          label: Text('Camera', style: TextStyle(color: Colors.blue)),
-                          onPressed: () async {
-                            ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                            await _pickImage(ImageSource.camera);
-                          },
-                        ),
-                        TextButton.icon(
-                          icon: Icon(Icons.photo, color: Colors.blue),
-                          label: Text('Gallery', style: TextStyle(color: Colors.blue)),
-                          onPressed: () async {
-                            ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                            await _pickImage(ImageSource.gallery);
-                          },
-                        ),
-                      ],
-                    ),
-                    duration: Duration(seconds: 5),
-                    backgroundColor: Colors.white,
-                    behavior: SnackBarBehavior.floating,
-                    dismissDirection: DismissDirection.horizontal,
-                  );
-                  ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                backgroundImage: (base64ProfileImage != null &&
+                        base64ProfileImage!.isNotEmpty &&
+                        base64ProfileImage!.contains(','))
+                    ? MemoryImage(base64Decode(base64ProfileImage!
+                        .split(',')
+                        .last)) // remove data URI prefix if any
+                    : const AssetImage('assets/default_pic.jpg')
+                        as ImageProvider,
+                onBackgroundImageError: (exception, stackTrace) {
+                  print('Error loading profile image: $exception');
+                  print('Stack trace: $stackTrace');
                 },
               ),
+              if (!widget.isReadOnly)
+                IconButton(
+                  icon: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    padding: const EdgeInsets.all(5),
+                    child: const Icon(Icons.camera_alt,
+                        color: Colors.blue, size: 18),
+                  ),
+                  onPressed: () async {
+                    final snackBar = SnackBar(
+                      content: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          TextButton.icon(
+                            icon: Icon(Icons.camera_alt, color: Colors.blue),
+                            label: Text('Camera',
+                                style: TextStyle(color: Colors.blue)),
+                            onPressed: () async {
+                              ScaffoldMessenger.of(context)
+                                  .hideCurrentSnackBar();
+                              await _pickImage(ImageSource.camera);
+                            },
+                          ),
+                          TextButton.icon(
+                            icon: Icon(Icons.photo, color: Colors.blue),
+                            label: Text('Gallery',
+                                style: TextStyle(color: Colors.blue)),
+                            onPressed: () async {
+                              ScaffoldMessenger.of(context)
+                                  .hideCurrentSnackBar();
+                              await _pickImage(ImageSource.gallery);
+                            },
+                          ),
+                        ],
+                      ),
+                      duration: Duration(seconds: 5),
+                      backgroundColor: Colors.white,
+                      behavior: SnackBarBehavior.floating,
+                      dismissDirection: DismissDirection.horizontal,
+                    );
+                    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                  },
+                ),
             ],
           ),
           const SizedBox(width: 24),
@@ -464,19 +503,26 @@ class UserDetailsPageState extends State<UserDetailsPage> {
                   ),
                 ),
                 const SizedBox(height: 4),
-                InkWell(
-                  onTap: () {}, // to be implemented
-                  child: Text(
-                    "${friends.length} friend${friends.length == 1 ? "" : "s"}",
-                    style: const TextStyle(
-                      fontSize: 15,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w500,
-                      decoration: TextDecoration.underline,
-                      decorationColor: Colors.white,
+                if (!widget.isReadOnly)
+                  InkWell(
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => FriendsListPage(),
+                        ),
+                      );
+                    },
+                    child: Text(
+                      "${friends.length} friend${friends.length == 1 ? "" : "s"}",
+                      style: const TextStyle(
+                        fontSize: 15,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w500,
+                        decoration: TextDecoration.underline,
+                        decorationColor: Colors.white,
+                      ),
                     ),
                   ),
-                ),
               ],
             ),
           ),
@@ -486,11 +532,73 @@ class UserDetailsPageState extends State<UserDetailsPage> {
   }
 
   Future<void> _pickImage(ImageSource source) async {
-    final image = await ImagePicker().pickImage(source: source);
-    if (image != null) {
-      setState(() {
-        imageFile = File(image.path);
-      });
+    try {
+      // Request permissions
+      if (source == ImageSource.camera) {
+        final status = await Permission.camera.request();
+        if (!status.isGranted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Camera permission is required to take photos'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
+        }
+      } else {
+        final hasPermission = await PermissionUtils.requestStoragePermission();
+        if (!hasPermission) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Storage permission is required to access photos'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
+        }
+      }
+
+      final image = await ImagePicker().pickImage(
+        source: source,
+        imageQuality: 70,
+        maxWidth: 800,
+        maxHeight: 800,
+      );
+
+      if (image != null) {
+        final file = File(image.path);
+        final imgBytes = await file.readAsBytes();
+        final base64Image = 'data:image/jpeg;base64,${base64Encode(imgBytes)}';
+        setState(() {
+          imageFile = file;
+        });
+        try {
+          await context
+              .read<UserProvider>()
+              .updateProfileImage(base64Image);
+          await fetchUserDetails(); // Refresh the user details after update
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Profile picture updated successfully'),
+              backgroundColor: Colors.lightBlue,
+            ),
+          );
+        } catch (e) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to update profile picture: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error picking image: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -500,7 +608,7 @@ class UserDetailsPageState extends State<UserDetailsPage> {
     required VoidCallback onFindSimilar,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10.2, vertical: 10.0),
+      padding: const EdgeInsets.symmetric(horizontal: 9.2, vertical: 10.0),
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
@@ -513,7 +621,7 @@ class UserDetailsPageState extends State<UserDetailsPage> {
             ),
           ],
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         child: Row(
           children: [
             // Switch and label
@@ -531,7 +639,7 @@ class UserDetailsPageState extends State<UserDetailsPage> {
                           fontSize: 14,
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      // const SizedBox(width: 5),
                       Switch(
                         value: isPublic,
                         onChanged: onToggle,
@@ -551,7 +659,7 @@ class UserDetailsPageState extends State<UserDetailsPage> {
                   backgroundColor: Color(0xff73c7ff),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
+                    horizontal: 8,
                     vertical: 5,
                   ),
                   shape: RoundedRectangleBorder(
@@ -561,7 +669,7 @@ class UserDetailsPageState extends State<UserDetailsPage> {
                 ),
                 child: const Text(
                   "Find similar people",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.5),
                 ),
               ),
             ),
@@ -609,7 +717,6 @@ class UserDetailsPageState extends State<UserDetailsPage> {
 
     var selectedIndex = 3;
     return Scaffold(
-      // drawer: DrawerWidget(),
       backgroundColor: Colors.white,
       body: SingleChildScrollView(
         child: ConstrainedBox(
@@ -705,65 +812,85 @@ class UserDetailsPageState extends State<UserDetailsPage> {
                     if (interests != null && interests!.isNotEmpty)
                       buildInterestsSection(context),
                     const SizedBox(height: 16),
-                    if (travelPreferences != null && travelPreferences!.isNotEmpty)
+                    if (travelPreferences != null &&
+                        travelPreferences!.isNotEmpty)
                       buildTravelStylesSection(context),
                     const SizedBox(height: 16),
-                    publicProfileAndFindButton(
-                      isPublic: isPublic ?? true,
-                      onToggle: (val) async {
-                        setState(() => isPublic = val);
-                        try {
-                          await context.read<UserProvider>().updateUserIsPublic(val);
-                        } catch (e) {
-                          print(e);
-                        }
-                      },
-                      onFindSimilar: () {
-                        // action here
-                      },
-                    ),
+                    if (!widget.isReadOnly)
+                      publicProfileAndFindButton(
+                        isPublic: isPublic ?? true,
+                        onToggle: (val) async {
+                          setState(() => isPublic = val);
+                          try {
+                            await context
+                                .read<UserProvider>()
+                                .updateUserIsPublic(val);
+                          } catch (e) {
+                            print(e);
+                          }
+                        },
+                        onFindSimilar: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const FindSimilarPeoplePage(),
+                            ),
+                          );
+                        },
+                      ),
                     const SizedBox(height: 16),
                     // Sign Out Button
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                      child: Container(
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(32),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black12,
-                              blurRadius: 8,
-                              offset: Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: TextButton.icon(
-                          onPressed: () async {
-                            try {
-                              await context.read<TravelProvider>().signOut();
-                              context.read<TravelPlanProvider>().clear();
-                              Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
-                            } catch (e) {
-                              print("Error signing out: $e");
-                            }
-                          },
-                          icon: Icon(Icons.logout, color: Colors.red),
-                          label: Text(
-                            'Sign Out',
-                            style: TextStyle(
-                              color: Colors.red,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
+                    if (!widget.isReadOnly)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        child: Container(
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(32),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black12,
+                                blurRadius: 8,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
                           ),
-                          style: TextButton.styleFrom(
-                            padding: EdgeInsets.symmetric(vertical: 16),
+                          child: TextButton.icon(
+                            onPressed: () async {
+                              try {
+                                if (context.mounted) {
+                                  // First clear the travel plan provider
+                                  context.read<TravelPlanProvider>().clear();
+                                  // Then sign out using the firebase provider
+                                  await context.read<TravelProvider>().signOut();
+                                  if (context.mounted) {
+                                    Navigator.of(context).pushReplacementNamed('/login');
+                                  }
+                                }
+                              } catch (e) {
+                                print("Error signing out: $e");
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Error signing out: $e')),
+                                  );
+                                }
+                              }
+                            },
+                            icon: Icon(Icons.logout, color: Colors.red),
+                            label: Text(
+                              'Sign Out',
+                              style: TextStyle(
+                                color: Colors.red,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                            style: TextButton.styleFrom(
+                              padding: EdgeInsets.symmetric(vertical: 16),
+                            ),
                           ),
                         ),
                       ),
-                    ),
                     const SizedBox(height: 32),
                   ],
                 ),
@@ -782,19 +909,19 @@ class UserDetailsPageState extends State<UserDetailsPage> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        IconButton(
-                          icon: const Icon(
-                            Icons.arrow_back,
-                            color: Colors.white,
-                            size: 32,
-                          ),
-                          onPressed: () {
-                            Navigator.of(context).pushNamedAndRemoveUntil(
-                              '/travel_plans',
-                              (route) => false,
-                            );
-                          },
-                        ),
+                        if (widget.isReadOnly)
+                          IconButton(
+                            icon: const Icon(
+                              Icons.arrow_back,
+                              color: Colors.white,
+                              size: 32,
+                            ),
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                          )
+                        else
+                          const SizedBox(width: 48),
                         Expanded(
                           child: Center(
                             child: Text(
@@ -808,24 +935,27 @@ class UserDetailsPageState extends State<UserDetailsPage> {
                             ),
                           ),
                         ),
-                        IconButton(
-                          icon: const Icon(
-                            Icons.edit,
-                            color: Colors.white,
-                            size: 28,
-                          ),
-                          onPressed: () async {
-                            final needsRefresh = await Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => const EditProfilePage(),
-                              ),
-                            );
-                            
-                            if (needsRefresh == true) {
-                              fetchUserDetails();
-                            }
-                          },
-                        ),
+                        if (!widget.isReadOnly)
+                          IconButton(
+                            icon: const Icon(
+                              Icons.edit,
+                              color: Colors.white,
+                              size: 28,
+                            ),
+                            onPressed: () async {
+                              final needsRefresh = await Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => const EditProfilePage(),
+                                ),
+                              );
+
+                              if (needsRefresh == true) {
+                                fetchUserDetails();
+                              }
+                            },
+                          )
+                        else
+                          const SizedBox(width: 48)
                       ],
                     ),
                   ),
@@ -838,7 +968,6 @@ class UserDetailsPageState extends State<UserDetailsPage> {
       bottomNavigationBar: CustomNavBar(
         currentIndex: selectedIndex,
         onTap: (index) => (index),
-
       ),
     );
   }
