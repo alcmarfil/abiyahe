@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
+import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
 import 'package:project_abiyahe/common/navbar.dart';
 import 'package:project_abiyahe/screens/edit_profile_page.dart';
@@ -9,6 +10,8 @@ import 'package:project_abiyahe/providers/travel_plan_provider.dart';
 import 'package:project_abiyahe/screens/friends_list_page.dart';
 import 'package:project_abiyahe/screens/similar_people_page.dart';
 import 'package:provider/provider.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:project_abiyahe/utils/permission_utils.dart';
 
 class UserDetailsPage extends StatefulWidget {
   final String? targetUsername;
@@ -42,7 +45,6 @@ class UserDetailsPageState extends State<UserDetailsPage> {
     "Relaxation": "assets/relaxation_icon.png",
   };
 
-
   List<String>? travelPreferences;
   String? hoveredInterest;
   String? pressedInterest;
@@ -52,6 +54,7 @@ class UserDetailsPageState extends State<UserDetailsPage> {
   String? errorMessage;
   bool _isInitialized = false;
   List<String> friends = [];
+  String? base64ProfileImage;
 
   @override
   void initState() {
@@ -78,16 +81,17 @@ class UserDetailsPageState extends State<UserDetailsPage> {
       String? userId;
 
       if (widget.targetUsername != null) {
-        // get user if the user id is provided
         final userData =
             await userProvider.getUserByUsername(widget.targetUsername!);
         if (userData != null) {
-          // get user id
           userId = userData['userId'];
+          // Fetch target user's profile picture
+          base64ProfileImage = await userProvider.getProfileImageBase64(userId: userId);
         }
       } else {
-        // if no user id is provided, get the current user id
         userId = await userProvider.getCurrentUserId();
+        // Fetch current user's profile picture
+        base64ProfileImage = await userProvider.getProfileImageBase64();
       }
 
       if (userId == null) {
@@ -98,7 +102,6 @@ class UserDetailsPageState extends State<UserDetailsPage> {
         return;
       }
 
-      // get user details
       await userProvider.getUserDetails(userId);
       final userDetails = userProvider.userDetails;
 
@@ -414,6 +417,7 @@ class UserDetailsPageState extends State<UserDetailsPage> {
   }
 
   Widget profilePicture(BuildContext context) {
+    print('Base64 image length: ${base64ProfileImage?.length}');
     return Padding(
       padding: const EdgeInsets.only(left: 32, right: 32, top: 40),
       child: Row(
@@ -424,59 +428,65 @@ class UserDetailsPageState extends State<UserDetailsPage> {
             children: [
               CircleAvatar(
                 radius: 55,
-                backgroundImage: imageFile != null
-                    ? FileImage(imageFile!)
-                    : (profilePictureUrl != null &&
-                                profilePictureUrl!.isNotEmpty
-                            ? NetworkImage(profilePictureUrl!)
-                            : const AssetImage('assets/default_pic.jpg'))
+                backgroundImage: (base64ProfileImage != null &&
+                        base64ProfileImage!.isNotEmpty &&
+                        base64ProfileImage!.contains(','))
+                    ? MemoryImage(base64Decode(base64ProfileImage!
+                        .split(',')
+                        .last)) // remove data URI prefix if any
+                    : const AssetImage('assets/default_pic.jpg')
                         as ImageProvider,
-                child: null,
+                onBackgroundImageError: (exception, stackTrace) {
+                  print('Error loading profile image: $exception');
+                  print('Stack trace: $stackTrace');
+                },
               ),
               if (!widget.isReadOnly)
                 IconButton(
                   icon: Container(
                     decoration: BoxDecoration(
                       color: Colors.white,
-                    shape: BoxShape.circle,
-                  ),
-                  padding: const EdgeInsets.all(5),
-                  child: const Icon(Icons.camera_alt,
-                      color: Colors.blue, size: 18),
-                ),
-                onPressed: () async {
-                  final snackBar = SnackBar(
-                    content: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        TextButton.icon(
-                          icon: Icon(Icons.camera_alt, color: Colors.blue),
-                          label: Text('Camera',
-                              style: TextStyle(color: Colors.blue)),
-                          onPressed: () async {
-                            ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                            await _pickImage(ImageSource.camera);
-                          },
-                        ),
-                        TextButton.icon(
-                          icon: Icon(Icons.photo, color: Colors.blue),
-                          label: Text('Gallery',
-                              style: TextStyle(color: Colors.blue)),
-                          onPressed: () async {
-                            ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                            await _pickImage(ImageSource.gallery);
-                          },
-                        ),
-                      ],
+                      shape: BoxShape.circle,
                     ),
-                    duration: Duration(seconds: 5),
-                    backgroundColor: Colors.white,
-                    behavior: SnackBarBehavior.floating,
-                    dismissDirection: DismissDirection.horizontal,
-                  );
-                  ScaffoldMessenger.of(context).showSnackBar(snackBar);
-                },
-              ),
+                    padding: const EdgeInsets.all(5),
+                    child: const Icon(Icons.camera_alt,
+                        color: Colors.blue, size: 18),
+                  ),
+                  onPressed: () async {
+                    final snackBar = SnackBar(
+                      content: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          TextButton.icon(
+                            icon: Icon(Icons.camera_alt, color: Colors.blue),
+                            label: Text('Camera',
+                                style: TextStyle(color: Colors.blue)),
+                            onPressed: () async {
+                              ScaffoldMessenger.of(context)
+                                  .hideCurrentSnackBar();
+                              await _pickImage(ImageSource.camera);
+                            },
+                          ),
+                          TextButton.icon(
+                            icon: Icon(Icons.photo, color: Colors.blue),
+                            label: Text('Gallery',
+                                style: TextStyle(color: Colors.blue)),
+                            onPressed: () async {
+                              ScaffoldMessenger.of(context)
+                                  .hideCurrentSnackBar();
+                              await _pickImage(ImageSource.gallery);
+                            },
+                          ),
+                        ],
+                      ),
+                      duration: Duration(seconds: 5),
+                      backgroundColor: Colors.white,
+                      behavior: SnackBarBehavior.floating,
+                      dismissDirection: DismissDirection.horizontal,
+                    );
+                    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                  },
+                ),
             ],
           ),
           const SizedBox(width: 24),
@@ -522,11 +532,73 @@ class UserDetailsPageState extends State<UserDetailsPage> {
   }
 
   Future<void> _pickImage(ImageSource source) async {
-    final image = await ImagePicker().pickImage(source: source);
-    if (image != null) {
-      setState(() {
-        imageFile = File(image.path);
-      });
+    try {
+      // Request permissions
+      if (source == ImageSource.camera) {
+        final status = await Permission.camera.request();
+        if (!status.isGranted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Camera permission is required to take photos'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
+        }
+      } else {
+        final hasPermission = await PermissionUtils.requestStoragePermission();
+        if (!hasPermission) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Storage permission is required to access photos'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
+        }
+      }
+
+      final image = await ImagePicker().pickImage(
+        source: source,
+        imageQuality: 70,
+        maxWidth: 800,
+        maxHeight: 800,
+      );
+
+      if (image != null) {
+        final file = File(image.path);
+        final imgBytes = await file.readAsBytes();
+        final base64Image = 'data:image/jpeg;base64,${base64Encode(imgBytes)}';
+        setState(() {
+          imageFile = file;
+        });
+        try {
+          await context
+              .read<UserProvider>()
+              .updateProfileImage(base64Image);
+          await fetchUserDetails(); // Refresh the user details after update
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Profile picture updated successfully'),
+              backgroundColor: Colors.lightBlue,
+            ),
+          );
+        } catch (e) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to update profile picture: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error picking image: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -786,12 +858,22 @@ class UserDetailsPageState extends State<UserDetailsPage> {
                           child: TextButton.icon(
                             onPressed: () async {
                               try {
-                                await context.read<TravelProvider>().signOut();
-                                context.read<TravelPlanProvider>().clear();
-                                Navigator.of(context).pushNamedAndRemoveUntil(
-                                    '/login', (route) => false);
+                                if (context.mounted) {
+                                  // First clear the travel plan provider
+                                  context.read<TravelPlanProvider>().clear();
+                                  // Then sign out using the firebase provider
+                                  await context.read<TravelProvider>().signOut();
+                                  if (context.mounted) {
+                                    Navigator.of(context).pushReplacementNamed('/login');
+                                  }
+                                }
                               } catch (e) {
                                 print("Error signing out: $e");
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Error signing out: $e')),
+                                  );
+                                }
                               }
                             },
                             icon: Icon(Icons.logout, color: Colors.red),
@@ -861,8 +943,7 @@ class UserDetailsPageState extends State<UserDetailsPage> {
                               size: 28,
                             ),
                             onPressed: () async {
-                              final needsRefresh =
-                                  await Navigator.of(context).push(
+                              final needsRefresh = await Navigator.of(context).push(
                                 MaterialPageRoute(
                                   builder: (context) => const EditProfilePage(),
                                 ),

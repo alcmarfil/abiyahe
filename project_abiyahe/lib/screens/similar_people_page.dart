@@ -5,6 +5,7 @@ import 'package:project_abiyahe/models/similar_user_model.dart';
 import 'package:project_abiyahe/providers/friends_provider.dart';
 import 'package:project_abiyahe/screens/friend_requests.dart';
 import 'package:project_abiyahe/screens/user_profile_page.dart';
+import 'dart:convert';
 
 class FindSimilarPeoplePage extends StatefulWidget {
   const FindSimilarPeoplePage({super.key});
@@ -75,7 +76,7 @@ class _FindSimilarPeoplePageState extends State<FindSimilarPeoplePage> {
                 crossAxisCount: 2,
                 mainAxisSpacing: 24,
                 crossAxisSpacing: 24,
-                childAspectRatio: 0.8,
+                childAspectRatio: 0.7,
               ),
               itemBuilder: (context, index) {
                 final user = provider.similarUsers[index];
@@ -96,7 +97,6 @@ class _FindSimilarPeoplePageState extends State<FindSimilarPeoplePage> {
   }
 
   Widget _buildUserCard(BuildContext context, SimilarUser user, FriendsProvider provider) {
-    const defaultPic = 'assets/default_pic.jpg';
     final hasSentRequest = provider.hasSentRequestTo(user.userName); // check if the current user has sent a request to user
 
     return GestureDetector(
@@ -105,7 +105,7 @@ class _FindSimilarPeoplePageState extends State<FindSimilarPeoplePage> {
           context,
           MaterialPageRoute(
             builder: (context) => UserDetailsPage(
-              targetUsername: user.userName, // pass the username to the user details page
+              targetUsername: user.userName,
               isReadOnly: true,
             ),
           ),
@@ -121,12 +121,12 @@ class _FindSimilarPeoplePageState extends State<FindSimilarPeoplePage> {
           children: [
             CircleAvatar(
               radius: 48,
-              backgroundImage: NetworkImage(
-                (user.profilePicUrl != null && user.profilePicUrl!.isNotEmpty)
-                    ? user.profilePicUrl!
-                    : defaultPic,
-              ),
               backgroundColor: Colors.white,
+              backgroundImage: (user.profilePictureUrl != null && user.profilePictureUrl!.isNotEmpty)
+                  ? (user.profilePictureUrl!.startsWith('data:image') || user.profilePictureUrl!.startsWith('data:image/jpeg'))
+                      ? MemoryImage(base64Decode(user.profilePictureUrl!.split(',')[1])) as ImageProvider
+                      : NetworkImage(user.profilePictureUrl!) as ImageProvider
+                  : const AssetImage('assets/default_pic.jpg') as ImageProvider,
             ),
             const SizedBox(height: 12),
             Text(
