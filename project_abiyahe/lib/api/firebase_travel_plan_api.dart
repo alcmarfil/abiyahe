@@ -212,12 +212,11 @@ class FirebaseTravelPlanAPI {
     List<Map<String, dynamic>> users = [];
     for (String userId in sharedWith) {
       final userDoc = await db.collection('Users').doc(userId).get();
-      final isFriend = userDoc.data()?['friends']?.contains(userId) ?? false;
       if (userDoc.exists) {
         users.add({
           'userId': userId,
           'username': userDoc.data()?['userName'] ?? 'Unknown User',
-          'relationship': isFriend ? 'Friend' : 'Stranger',
+          'friends': userDoc.data()?['friends'] ?? [],
         });
       }
     }
