@@ -375,46 +375,50 @@ class _TravelDetailsState extends State<TravelDetails>
                         'Notification scheduled for: ${daysBefore.toString()}',
                       );
 
-                      final now = DateTime.now();
-
                       // schedule the notification
                       final scheduledDate = _currentPlan.startDate.subtract(
-                        Duration(minutes: daysBefore),
+                        Duration(days: daysBefore),
                       ); 
 
-                      final tzDateTime = tz.TZDateTime(
-                        tz.local,
-                        scheduledDate.year,
-                        scheduledDate.month,
-                        scheduledDate.day,
-                        scheduledDate.hour,
-                        scheduledDate.minute,
-                        scheduledDate.second,
-                      );
+                      print('\n=== Scheduling Trip Reminder ===');
+                      print('Trip Name: ${_currentPlan.name}');
+                      print('Trip Start Date: ${_currentPlan.startDate}');
+                      print('Days Before: $daysBefore');
+                      print('Calculated Reminder Date: $scheduledDate');
 
-                      print(
-                        'tzDateTime runtimeType: ${tzDateTime.runtimeType}',
-                      );
-                      print('Current time: $now');
-                      print('Scheduled time: $tzDateTime');
-                      print(
-                        'Is scheduled time in the past? ${tzDateTime.isBefore(now)}',
-                      );
+                      final tzDateTime = tz.TZDateTime.from(scheduledDate, tz.local);
+                      print('Converted to TZDateTime: $tzDateTime');
+
+                      if (tzDateTime.isBefore(tz.TZDateTime.now(tz.local))) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Cannot set reminder for a date in the past'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                        return;
+                      }
+
                       await LocalNotificationService().scheduleNotification(
-                        id: _currentPlan.travelId.hashCode,
+                        tripId: _currentPlan.travelId!,
                         title: 'Trip Reminder',
                         body: 'Your trip "${_currentPlan.name}" is coming up!',
-                        scheduledDate: tzDateTime,
+                        scheduledDate: scheduledDate,
+                        context: context,
                       );
 
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            'Reminder set for $daysBefore days before your trip!',
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Reminder set for $daysBefore days before your trip!',
+                            ),
+                            backgroundColor: Color(0xff25b1ff),
                           ),
-                          backgroundColor: Color(0xff25b1ff),
-                        ),
-                      );
+                        );
+                      }
                     },
                     padding: EdgeInsets.all(0),
                     constraints: BoxConstraints(),

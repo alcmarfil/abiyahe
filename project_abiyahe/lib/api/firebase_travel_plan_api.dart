@@ -154,19 +154,34 @@ class FirebaseTravelPlanAPI {
     await db.collection('travelplans').doc(travelId).update({'sharedWith': FieldValue.arrayUnion(userIds)});  
   }  
 
-  /// unshare a travel plan with a user (remove access from a user)  
-  Future<void> unshareTravelPlan({  
-    required String travelId,  
-    required String userId,  
-  }) async {  
-    await db.collection('travelplans').doc(travelId).update({'sharedWith': FieldValue.arrayRemove([userId])});  
+  /// unshare a travel plan with a user (remove access from a user)
+  Future<void> unshareTravelPlan({
+    required String travelId,
+    required String userId,
+  }) async {
+    // First get the current sharedWith array
+    final doc = await db.collection('travelplans').doc(travelId).get();
+    final sharedWith = doc.data()?['sharedWith'] as List<dynamic>? ?? [];
+    
+    // Find the item to remove (either string or map)
+    final itemToRemove = sharedWith.firstWhere(
+      (item) => (item is String && item == userId) || 
+                (item is Map<String, dynamic> && item['userId'] == userId),
+      orElse: () => null,
+    );
+
+    if (itemToRemove != null) {
+      await db.collection('travelplans').doc(travelId).update({
+        'sharedWith': FieldValue.arrayRemove([itemToRemove])
+      });
+    }
   }  
 
   // NEW METHOD ADDED HERE  
-  Future<void> joinTravelPlanViaQR(String travelId, String userId) async {  
-    await db.collection('travelplans').doc(travelId).update({  
-      'sharedWith': FieldValue.arrayUnion([userId]),  
-    });  
+  Future<void> joinTravelPlanViaQR(String travelId, String userId) async {
+    await db.collection('travelplans').doc(travelId).update({
+      'sharedWith': FieldValue.arrayUnion([userId]),
+    });
   }  
 
   Stream<List<TravelPlans>> getSharedTravelPlansStream(String userId) {  
@@ -191,18 +206,26 @@ class FirebaseTravelPlanAPI {
     }  
   }  
 
-  Future<List<Map<String, dynamic>>> getSharedUsersDetails(List<String> sharedWith) async {  
-    List<Map<String, dynamic>> users = [];  
-    for (String userId in sharedWith) {  
-      final userDoc = await db.collection('Users').doc(userId).get();  
-      if (userDoc.exists) {  
-        users.add({  
-          'userId': userId,  
-          'username': userDoc.data()?['userName'] ?? 'Unknown User',  
-        });  
-      }  
-    }  
-    return users;  
+  Future<List<Map<String, dynamic>>> getSharedUsersDetails(List<dynamic> sharedWith) async {
+    List<Map<String, dynamic>> users = [];
+    for (var user in sharedWith) {
+      if (user is String) {
+        // Handle friend shares (just user ID)
+        final userDoc = await db.collection('Users').doc(user).get();
+        if (userDoc.exists) {
+          users.add({
+            'userId': user,
+            'username': userDoc.data()?['userName'] ?? 'Unknown User',
+          });
+        }
+      } else if (user is Map<String, dynamic>) {
+        users.add({
+          'userId': user['userId'],
+          'username': user['userName'] ?? 'Unknown User',
+        });
+      }
+    }
+    return users;
   }  
 }  
 

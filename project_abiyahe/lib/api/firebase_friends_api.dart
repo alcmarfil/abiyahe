@@ -83,14 +83,17 @@ class FirebaseFriendsAPI {
         final samePreferences = currentPrefs.where(preferences.contains).toList();
 
         if (sameInterests.isNotEmpty && samePreferences.isNotEmpty) {
-          matches.add(
-            SimilarUser(
-              userName: userName.isNotEmpty ? userName : 'Username doko?',
-              sharedInterests: sameInterests,
-              sharedPreferences: samePreferences,
-              profilePicUrl: data['profilePicUrl'],
-            ),
+          // print('Loading user: $userName');
+          // print('Raw data from Firestore: $data');
+          // print('Profile picture URL from Firestore: ${data['profilePictureUrl']}');
+          final similarUser = SimilarUser(
+            userName: userName.isNotEmpty ? userName : 'Username doko?',
+            sharedInterests: sameInterests,
+            sharedPreferences: samePreferences,
+            profilePictureUrl: data['profilePictureUrl'] ?? '',
           );
+          // print('Created SimilarUser with profile picture URL: ${similarUser.profilePictureUrl}');
+          matches.add(similarUser);
         }
       }
 
@@ -149,33 +152,4 @@ class FirebaseFriendsAPI {
     }
   }
 
-  Future<void> acceptFriendRequest(String receiverId, String senderUsername) async {
-    // Get sender's user document by username
-    final senderQuery = await _firestore
-        .collection('Users')
-        .where('userName', isEqualTo: senderUsername)
-        .get();
-    if (senderQuery.docs.isEmpty) throw Exception('Sender not found');
-    final senderId = senderQuery.docs.first.id;
-
-    // Get receiver's username
-    final receiverDoc = await _firestore.collection('Users').doc(receiverId).get();
-    final receiverUsername = receiverDoc.data()?['userName'];
-
-    print('Receiver sentRequests before: ${receiverDoc.data()?['sentRequests']}');
-    print('Trying to remove: $senderUsername');
-
-    // Remove sender from receiver's receivedRequests
-    await _firestore.collection('Users').doc(receiverId).update({
-      'receivedRequests': FieldValue.arrayRemove([senderUsername]),
-      'friends': FieldValue.arrayUnion([senderUsername]),
-      'sentRequests': FieldValue.arrayRemove([senderUsername]), 
-    });
-
-    await _firestore.collection('Users').doc(senderId).update({
-      'sentRequests': FieldValue.arrayRemove([receiverUsername]),
-      'receivedRequests': FieldValue.arrayRemove([receiverUsername]), 
-      'friends': FieldValue.arrayUnion([receiverUsername]),
-    });
-  }
 } 
