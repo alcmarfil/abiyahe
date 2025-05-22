@@ -173,7 +173,13 @@ class _TravelPlanModalState extends State<TravelPlanModal> {
             return Column(
               mainAxisSize: MainAxisSize.min,
               children: snapshot.data!.map((user) {
-                final bool isFriend = user['isFriend'] ?? false;
+                final userDetails = context.read<UserProvider>().userDetails;
+                print(userDetails);
+                final currentUsername = userDetails!['userName'];
+                final List<dynamic> friends = user['friends'] ?? [];
+                print(friends);
+
+                final isFriend = friends.contains(currentUsername);
                 return ListTile(
                   title: Column(
                     children: [
