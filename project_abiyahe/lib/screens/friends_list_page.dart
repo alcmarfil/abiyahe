@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:project_abiyahe/providers/friends_provider.dart';
+import 'dart:convert';
 
 class FriendsListPage extends StatefulWidget {
   const FriendsListPage({super.key});
@@ -62,15 +63,17 @@ class _FriendsListPageState extends State<FriendsListPage> {
 
           return ListView.builder(
             itemCount: friendsProvider.friends.length,
-        itemBuilder: (context, index) {
+            itemBuilder: (context, index) {
               final friend = friendsProvider.friends[index];
-          return ListTile(
-            leading: CircleAvatar(
-                  backgroundImage: friend.profilePictureUrl != null
-                      ? NetworkImage(friend.profilePictureUrl!)
-                      : const AssetImage('assets/default_pic.jpg') as ImageProvider,
-                  child: friend.profilePictureUrl == null
-                      ? null
+              return ListTile(
+                leading: CircleAvatar(
+                  backgroundImage: (friend.profilePictureUrl != null && friend.profilePictureUrl!.isNotEmpty)
+                      ? (friend.profilePictureUrl!.startsWith('data:image')
+                          ? MemoryImage(base64Decode(friend.profilePictureUrl!.split(',')[1])) as ImageProvider
+                          : NetworkImage(friend.profilePictureUrl!) as ImageProvider)
+                      : null,
+                  child: friend.profilePictureUrl == null || friend.profilePictureUrl!.isEmpty
+                      ? const Icon(Icons.person)
                       : null,
                 ),
                 title: Text(friend.fullName),

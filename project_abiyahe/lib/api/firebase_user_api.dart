@@ -1,11 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:project_abiyahe/services/notification_service.dart';
 
 class FirebaseUserAPI {
   static final FirebaseFirestore db = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
+  final LocalNotificationService _notificationService = LocalNotificationService();
 
   User? get currentUser => _auth.currentUser;
 
@@ -89,6 +91,7 @@ class FirebaseUserAPI {
 
       // Sign out from Firebase Auth
       await _auth.signOut();
+      await _notificationService.cancelAllNotifications();
     } catch (e) {
       print('Error during sign out: $e');
       rethrow;
