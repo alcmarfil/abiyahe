@@ -325,6 +325,7 @@ class _TravelDetailsState extends State<TravelDetails>
                 ),
               ),
               // notification reminder button
+              if (isOwner)
               Positioned(
                 top: 15,
                 right: 15,
