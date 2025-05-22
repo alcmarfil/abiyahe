@@ -4,6 +4,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:project_abiyahe/providers/user_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:project_abiyahe/utils/permission_utils.dart';
 
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({super.key});
@@ -182,6 +184,31 @@ class EditProfilePageState extends State<EditProfilePage> {
 
   Future<void> _pickImage(ImageSource source) async {
     try {
+      // Request permissions
+      if (source == ImageSource.camera) {
+        final status = await Permission.camera.request();
+        if (!status.isGranted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Camera permission is required to take photos'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
+        }
+      } else {
+        final hasPermission = await PermissionUtils.requestStoragePermission();
+        if (!hasPermission) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Storage permission is required to access photos'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
+        }
+      }
+
       final image = await ImagePicker().pickImage(
         source: source,
         imageQuality: 70,
@@ -192,7 +219,7 @@ class EditProfilePageState extends State<EditProfilePage> {
       if (image != null) {
         final file = File(image.path);
         final imgBytes = await file.readAsBytes();
-        final base64Image = base64Encode(imgBytes);
+        final base64Image = 'data:image/jpeg;base64,${base64Encode(imgBytes)}';
         setState(() {
           imageFile = file;
           profilePictureUrl = base64Image;

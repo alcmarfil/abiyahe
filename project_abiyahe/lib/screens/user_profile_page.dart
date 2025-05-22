@@ -241,8 +241,9 @@ class UserDetailsPageState extends State<UserDetailsPage> {
 
   Widget buildTravelStylesSection(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final itemWidth = (screenWidth - 64 - 24) /
-        2; // 2 per row, 32px padding each side, 24px spacing
+    final itemWidth = travelPreferences!.length == 1 
+        ? screenWidth - 64  // Full width minus padding
+        : (screenWidth - 64 - 24) / 2; // 2 per row, 32px padding each side, 24px spacing
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 14.0),
