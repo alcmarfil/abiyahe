@@ -74,6 +74,8 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.13.1
+  flutter_native_splash: ^2.3.10
 
 
 # For information on the generic Dart part of this file, see the
@@ -105,17 +107,6 @@ flutter:
     - assets/relaxation_icon.png
   
 
-  # An image asset can refer to one or more resolution-specific "variants", see
-  # https://flutter.dev/to/resolution-aware-images
-
-  # For details regarding adding assets from package dependencies, see
-  # https://flutter.dev/to/asset-from-package
-
-  # To add custom fonts to your application, add a fonts section here,
-  # in this "flutter" section. Each entry in this list should have a
-  # "family" key with the font family name, and a "fonts" key with a
-  # list giving the asset and other descriptors for the font. For
-  # example:
   fonts:
     - family: abiyahefont
       fonts:
@@ -128,3 +119,24 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/abiyahe.png"
+  adaptive_icon_background: "#ffffff"
+  adaptive_icon_foreground: "assets/abiyahe.png"
+
+flutter_native_splash:
+  color: "#ffffff" 
+  image: "assets/abiyahe.png"
+
+android_12:
+  image: "assets/abiyahe.png"
+  icon_background_color: "#ffffff"
+
+# An image asset can refer to one or more resolution-specific "variants", see
+# https://flutter.dev/to/resolution-aware-images
+
+# For details regarding adding assets from package dependencies, see
+# https://flutter.dev/to/asset-from-package
