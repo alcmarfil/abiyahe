@@ -13,6 +13,7 @@ import 'dart:io' show Platform;
 // This needs to be a top-level function - tells the VM that this function should be preserved
 // and accessible even when app is in background or terminated
 @pragma('vm:entry-point')
+
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   // initialize notifications
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
@@ -181,18 +182,25 @@ class LocalNotificationService {
   }) async {
     // Create TZDateTime directly with local time components
     final location = tz.local;
+    
+    // If the time is midnight (00:00:00), adjust it to 00:05:00 to avoid potential issues
+    DateTime adjustedDate = scheduledDate;
+    if (scheduledDate.hour == 0 && scheduledDate.minute == 0 && scheduledDate.second == 0) {
+      adjustedDate = scheduledDate.add(Duration(minutes: 5));
+      print('Adjusted time from midnight to: ${adjustedDate.hour}:${adjustedDate.minute}:${adjustedDate.second}');
+    }
+    
     final tzDateTime = tz.TZDateTime(
       location,
-      scheduledDate.year,
-      scheduledDate.month,
-      scheduledDate.day,
-      scheduledDate.hour,
-      scheduledDate.minute,
-      scheduledDate.second,
+      adjustedDate.year,
+      adjustedDate.month,
+      adjustedDate.day,
+      adjustedDate.hour,
+      adjustedDate.minute,
+      adjustedDate.second,
     );
     final notificationId = tripId.hashCode.abs();
     final userId = context.read<TravelProvider>().userId;
-
 
     await flutterLocalNotificationsPlugin.zonedSchedule(
       notificationId,
@@ -206,11 +214,6 @@ class LocalNotificationService {
           channelDescription: channel.description,
           importance: Importance.high,
           priority: Priority.high,
-        ),
-        iOS: const DarwinNotificationDetails(
-          presentAlert: true,
-          presentBadge: true,
-          presentSound: true,
         ),
       ),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
@@ -258,5 +261,19 @@ class LocalNotificationService {
     }
 
     return false;
+  }
+
+  // Test function to send immediate notification
+  Future<void> testImmediateNotification() async {
+    print('\n=== Testing Immediate Notification ===');
+    try {
+      await _showNotification(
+        'Test Notification',
+        'This is a test notification to verify the notification system is working.',
+      );
+      print('Test notification sent successfully');
+    } catch (e) {
+      print('Error sending test notification: $e');
+    }
   }
 }

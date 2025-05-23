@@ -22,6 +22,7 @@ Future<void> main() async {
   
   // Initialize the notification service
   await LocalNotificationService().initialize();
+  // await LocalNotificationService().testImmediateNotification();
 
   runApp(
     MultiProvider(
