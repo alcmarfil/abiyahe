@@ -238,6 +238,10 @@ class LocalNotificationService {
 
     // Show all pending notifications
     await showPendingNotifications();
+    await _showNotification(
+      '[TEST] $title',
+      '[TEST] $body ',
+    );
     await testImmediateNotification();
   }
 
