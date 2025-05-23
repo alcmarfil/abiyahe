@@ -183,21 +183,21 @@ class LocalNotificationService {
     // Create TZDateTime directly with local time components
     final location = tz.local;
     
-    // If the time is midnight (00:00:00), adjust it to 00:05:00 to avoid potential issues
-    DateTime adjustedDate = scheduledDate;
-    if (scheduledDate.hour == 0 && scheduledDate.minute == 0 && scheduledDate.second == 0) {
-      adjustedDate = scheduledDate.add(Duration(minutes: 5));
-      print('Adjusted time from midnight to: ${adjustedDate.hour}:${adjustedDate.minute}:${adjustedDate.second}');
-    }
+    // // If the time is midnight (00:00:00), adjust it to 00:05:00 to avoid potential issues
+    // DateTime adjustedDate = scheduledDate;
+    // if (scheduledDate.hour == 0 && scheduledDate.minute == 0 && scheduledDate.second == 0) {
+    //   adjustedDate = scheduledDate.add(Duration(minutes: 5));
+    //   print('Adjusted time from midnight to: ${adjustedDate.hour}:${adjustedDate.minute}:${adjustedDate.second}');
+    // }
     
     final tzDateTime = tz.TZDateTime(
       location,
-      adjustedDate.year,
-      adjustedDate.month,
-      adjustedDate.day,
-      adjustedDate.hour,
-      adjustedDate.minute,
-      adjustedDate.second,
+      scheduledDate.year,
+      scheduledDate.month,
+      scheduledDate.day,
+      scheduledDate.hour,
+      scheduledDate.minute,
+      scheduledDate.second,
     );
     final notificationId = tripId.hashCode.abs();
     final userId = context.read<TravelProvider>().userId;
@@ -238,6 +238,7 @@ class LocalNotificationService {
 
     // Show all pending notifications
     await showPendingNotifications();
+    await testImmediateNotification();
   }
 
   Future<bool> requestPostNotificationPermission() async {
